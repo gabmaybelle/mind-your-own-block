@@ -29,6 +29,7 @@ final class MindYourOwnBlockClientTest {
 	private static void key() {
 		run(mc -> {
 			check(Arrays.asList(mc.options.keyMappings).contains(ExactKey.KEY), "the key is in Controls");
+			check(ExactKey.KEY.getDefaultKey().getName().equals("key.mouse.4"), "the key's default is the mouse side button (key.mouse.4), not " + ExactKey.KEY.getDefaultKey().getName());
 			check(!serverOn(mc), "exact placing is off before the key is held");
 			ExactKey.KEY.setDown(true);
 		});

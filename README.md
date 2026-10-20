@@ -8,8 +8,9 @@ the block stays exactly as you placed it and minds its own business until you br
 
 ## What it does
 
-- **Hold a key while placing.** It's its own key (change it in Controls), not sneak, so it works on
-  scaffolding and while you sneak along a roof edge.
+- **Hold your mouse's side button while placing.** It's its own button, not sneak, so it works on
+  scaffolding and while you sneak along a roof edge. No side button, or on a touchpad? Pick any key
+  in Controls, under Mind Your Own Block.
 - **No joining.** Fences, walls, glass panes and iron bars stand alone, including modded ones built
   on vanilla's.
 - **Straight stairs.** Stairs never bend into an inner or outer corner.

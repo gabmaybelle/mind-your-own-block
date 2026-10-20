@@ -35,13 +35,14 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 	}
 
 	/**
-	 * The key: it's in Controls, holding it turns exact placing on for this player on the server
+	 * The key: it's in Controls with the mouse side button as its default, holding it turns exact placing on for this player on the server
 	 * (and in the player's own game), letting go turns it off, sneaking alone doesn't, and it works
 	 * while sneaking.
 	 */
 	private void key(ClientGameTestContext ctx, TestSingleplayerContext world) {
 		boolean listed = ctx.computeOnClient(mc -> Arrays.asList(mc.options.keyMappings).contains(ExactKey.KEY));
 		check(listed, "the key is in Controls");
+		check(ExactKey.KEY.getDefaultKey().getName().equals("key.mouse.4"), "the key's default is the mouse side button (key.mouse.4), not " + ExactKey.KEY.getDefaultKey().getName());
 		check(!serverOn(world), "exact placing is off before the key is held");
 
 		ctx.getInput().holdKey(ExactKey.KEY);

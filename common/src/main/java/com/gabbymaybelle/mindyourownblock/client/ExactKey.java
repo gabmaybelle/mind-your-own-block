@@ -15,10 +15,14 @@ import net.minecraft.client.Minecraft;
  */
 public final class ExactKey {
 	public static final KeyMapping.Category CATEGORY = new KeyMapping.Category(MindYourOwnBlock.id("keys"));
-	// Looked up while the game runs: 26.3 renumbered keys, so a constant would be compiled in with
-	// one version's number. The default is still to be chosen before release.
+	/**
+	 * The default: the mouse's first side button ("Mouse 4"), so the hand on the mouse holds it while
+	 * placing (Gabby's pick, 2026-10-20). Looked up while the game runs: 26.3 renumbered keys and
+	 * mouse buttons, so a constant would be compiled in with one version's number.
+	 */
+	private static final InputConstants.Key DEFAULT = InputConstants.getKey("key.mouse.4");
 	public static final KeyMapping KEY = new KeyMapping("key." + MindYourOwnBlock.MOD_ID + ".exact",
-			InputConstants.getKey("key.keyboard.x").getValue(), CATEGORY);
+			DEFAULT.getType(), DEFAULT.getValue(), CATEGORY);
 
 	/** What the server was last told. */
 	private static boolean sent;

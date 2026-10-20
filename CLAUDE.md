@@ -9,7 +9,8 @@ first, and add this session's row before ending.
 
 ## The design, in short
 
-- **The key** (`client/ExactKey`): its own rebindable key, never sneak, so it works on scaffolding
+- **The key** (`client/ExactKey`): its own rebindable key, by default the mouse's first side button
+  ("Mouse 4", Gabby's pick 2026-10-20: the hand on the mouse holds it while placing), never sneak, so it works on scaffolding
   (where sneaking climbs down) and while sneaking on a roof. Read at the start of every client tick,
   before the game handles clicks; when it goes down or comes up the game sends one small message
   (`ExactMode.Held`) to the server. On a server without the mod the key does nothing.
