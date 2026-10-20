@@ -25,19 +25,22 @@ first, and add this session's row before ending.
   any block with `waterlogged` is dry. It goes by vanilla's block classes and properties, never
   block names, so modded blocks built on vanilla's work too. Buckets are never touched. It runs on
   both sides, so the player's own game shows the shape the server places.
-- **Kept while placing** (`ExactPlacing.keeping`, `mixin/BlockStateBaseMixin`): setting the block
-  reshapes its neighbours, and a neighbour fence that grows an arm toward the new post reshapes the
-  post straight back. So while an exact placement goes in, that spot ignores `updateShape` (a
-  thread-local spot plus a counter, so every other neighbour update in the game costs one read).
-  Session 3's locked positions use the same hook.
 - **The crosshair mark** (`client/ExactHint`): a small padlock (7 by 9 px) just below and right of the
   crosshair while the key is held, only where the crosshair shows (first person, nothing open, HUD
   not hidden). The sprite is a draft until Gabby's art replaces it.
-- **Stays put** (planned, session 3): each chunk keeps a small list of locked positions (the
-  loaders' chunk-data attachments, saved and synced to players); a locked block keeps its state when
-  a neighbour changes. The lock clears when the block at that spot becomes a different block
-  (broken, replaced, pushed by a piston). A normal fence beside a locked post still reaches toward
-  it; a water bucket still fills a locked dry block.
+- **Stays put** (`StaysPut`, `Locks`, `mixin/BlockStateBaseMixin`, `mixin/LevelChunkMixin`): a
+  fence, wall, pane, bars or stair placed with the key is locked. Each chunk keeps its locked
+  positions as loader chunk data (Fabric's data attachments, NeoForge's attachment types), saved
+  with the chunk and synced to every player who sees it, so the player's game predicts the same
+  shape. `updateShape` runs as vanilla and then gets the arms, wall post and stair shape put back
+  (`StaysPut.keepShape`), so water and breaking-when-it-can't-survive still work. The same applies
+  while an exact placement goes in (`ExactPlacing.keeping`: the neighbour that grows an arm toward
+  the new post would otherwise reshape it straight back). The lock ends when the block at that spot
+  becomes a different block (`LevelChunk.setBlockState`): broken, replaced, or pushed by a piston
+  (which turns it into a moving block first). A normal fence beside a locked post still reaches
+  toward it; a water bucket still fills a locked post and the lock stays. Never locked in world
+  generation (only a real `Level` counts). The reshape hook runs on every neighbour update, so its
+  first check is whether the block is a kind that reshapes at all.
 - **Nothing runs every tick** on the server. Work happens only when someone places or a neighbour
   changes.
 
@@ -53,7 +56,9 @@ One codebase, two jars:
   Their `build.gradle` compiles `common`'s sources straight into their jar.
 - `fabric/src/gametest/`: the Fabric client game test (`MindYourOwnBlockClientTest`).
 - `common/src/sharedtest/`: checks both loaders' in-game tests compile in (`PlacingChecks`: each
-  case placed with the key and without it, on the server thread, as the test player). Never in a jar.
+  case placed with the key and without it, on the server thread, as the test player;
+  `StaysPutChecks`: locked blocks, step by step, then again after the world is reopened). Never in a
+  jar.
 - `neoforge/src/clienttest/`: the NeoForge in-game test: `ClientTest` runs steps one tick at a time,
   notes every failed check and crashes the game at the end if any failed;
   `MindYourOwnBlockClientTest` holds the same checks as the Fabric one.

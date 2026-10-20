@@ -8,6 +8,7 @@ import java.util.List;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,6 +24,7 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 
 	@Override
 	public void runTest(ClientGameTestContext ctx) {
+		TestWorldSave save;
 		try (TestSingleplayerContext world = ctx.worldBuilder().create()) {
 			world.getConnection().waitForChunksRender();
 			closeOtherModsScreens(ctx);
@@ -30,6 +32,16 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 			check(loaded, "the mod is loaded in a new world");
 			key(ctx, world);
 			placing(ctx, world);
+			staysPut(ctx, world);
+			save = world.getWorldSave();
+		}
+		// Saved and closed: open it again and check the locks came back with it.
+		try (TestSingleplayerContext world = save.open()) {
+			world.getConnection().waitForChunksRender();
+			closeOtherModsScreens(ctx);
+			world.getServer().runOnServer(server -> StaysPutChecks.afterRejoin(server.getPlayerList().getPlayers().getFirst(), this::check));
+			ctx.waitTicks(10);
+			ctx.runOnClient(mc -> StaysPutChecks.clientAgrees(mc.level, "after reopening", this::check));
 		}
 		if (!failures.isEmpty()) {
 			throw new AssertionError(failures.size() + " check(s) failed:\n - " + String.join("\n - ", failures));
@@ -84,6 +96,25 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 		world.getServer().runOnServer(server -> PlacingChecks.run(server.getPlayerList().getPlayers().getFirst(), false, this::check));
 		ctx.waitTicks(10);
 		ctx.takeScreenshot("placed-without-the-key");
+	}
+
+	/**
+	 * Stays put (StaysPutChecks, shared with NeoForge): locked blocks keep their shape as neighbours
+	 * come and go, a bucket still fills them, breaking or a piston ends the lock, and the player's own
+	 * game agrees with the server.
+	 */
+	private void staysPut(ClientGameTestContext ctx, TestSingleplayerContext world) {
+		ctx.getInput().holdKey(ExactKey.KEY);
+		ctx.waitTicks(5);
+		world.getServer().runOnServer(server -> StaysPutChecks.placeLocked(server.getPlayerList().getPlayers().getFirst(), this::check));
+		ctx.getInput().releaseKey(ExactKey.KEY);
+		ctx.waitTicks(5);
+		world.getServer().runOnServer(server -> StaysPutChecks.neighbours(server.getPlayerList().getPlayers().getFirst(), this::check));
+		// The piston takes a few ticks to push, and the locks a moment to reach the player's game.
+		ctx.waitTicks(20);
+		world.getServer().runOnServer(server -> StaysPutChecks.afterPiston(server.getPlayerList().getPlayers().getFirst(), this::check));
+		ctx.runOnClient(mc -> StaysPutChecks.clientAgrees(mc.level, "while playing", this::check));
+		ctx.takeScreenshot("stays-put");
 	}
 
 	/**

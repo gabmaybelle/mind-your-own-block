@@ -25,6 +25,28 @@ final class MindYourOwnBlockClientTest {
 		run(mc -> check(ModList.get().isLoaded(MindYourOwnBlock.MOD_ID), "the mod is loaded in a new world"));
 		key();
 		placing();
+		staysPut();
+	}
+
+	/** Stays put, the same checks as the Fabric test's {@code staysPut}, then the world reopened. */
+	private static void staysPut() {
+		run(mc -> ExactKey.KEY.setDown(true));
+		waitTicks(5);
+		run(mc -> onServer(mc, server -> StaysPutChecks.placeLocked(server.getPlayerList().getPlayers().getFirst(), ClientTest::check)));
+		run(mc -> ExactKey.KEY.setDown(false));
+		waitTicks(5);
+		run(mc -> onServer(mc, server -> StaysPutChecks.neighbours(server.getPlayerList().getPlayers().getFirst(), ClientTest::check)));
+		// The piston takes a few ticks to push, and the locks a moment to reach the player's game.
+		waitTicks(20);
+		run(mc -> {
+			onServer(mc, server -> StaysPutChecks.afterPiston(server.getPlayerList().getPlayers().getFirst(), ClientTest::check));
+			StaysPutChecks.clientAgrees(mc.level, "while playing", ClientTest::check);
+		});
+		ClientTest.screenshot();
+		ClientTest.rejoin();
+		run(mc -> onServer(mc, server -> StaysPutChecks.afterRejoin(server.getPlayerList().getPlayers().getFirst(), ClientTest::check)));
+		waitTicks(10);
+		run(mc -> StaysPutChecks.clientAgrees(mc.level, "after reopening", ClientTest::check));
 	}
 
 	/** The key, the same checks as the Fabric test's {@code key}. */

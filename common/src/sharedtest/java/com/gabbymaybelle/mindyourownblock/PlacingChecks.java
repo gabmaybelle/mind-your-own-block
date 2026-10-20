@@ -124,7 +124,7 @@ final class PlacingChecks {
 	}
 
 	/** Places the item at {@code at} by clicking the top of the stone below it, the player facing {@code yaw}. */
-	private static BlockState place(ServerPlayer player, BlockPos at, Item item, float yaw) {
+	static BlockState place(ServerPlayer player, BlockPos at, Item item, float yaw) {
 		player.setYRot(yaw);
 		player.setXRot(0F);
 		ItemStack stack = new ItemStack(item);
@@ -138,11 +138,14 @@ final class PlacingChecks {
 
 	/** The next case's spot: its own clear patch on a stone floor, 6 blocks apart, east of the player. */
 	private static BlockPos next(ServerPlayer player, int[] slot) {
-		ServerLevel level = player.level();
-		BlockPos at = player.blockPosition().offset(6 + 6 * slot[0]++, 0, 4);
+		return clear(player.level(), player.blockPosition().offset(6 + 6 * slot[0]++, 0, 4));
+	}
+
+	/** Clears a 5 by 5 patch around {@code at}, three high, on a stone floor, and returns {@code at}. */
+	static BlockPos clear(ServerLevel level, BlockPos at) {
 		for (BlockPos pos : BlockPos.betweenClosed(at.offset(-2, -1, -2), at.offset(2, 2, 2))) {
 			level.setBlock(pos, pos.getY() < at.getY() ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
 		}
-		return at;
+		return at.immutable();
 	}
 }

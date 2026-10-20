@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.registries.Registries;
@@ -49,6 +50,8 @@ final class ClientTest {
 	private static boolean finished;
 	/** Failed checks so far; checks run on both the game and the server thread. */
 	private static final List<String> FAILURES = new ArrayList<>();
+	/** The folder of the world {@link #createWorld} made, for {@link #rejoin}. */
+	private static String world;
 
 	private ClientTest() {
 	}
@@ -121,6 +124,7 @@ final class ClientTest {
 	 */
 	static void createWorld(String baseName) {
 		String name = baseName + "-" + System.currentTimeMillis();
+		world = name;
 		waitUntil("the title screen", 2400, mc -> mc.gui.overlay() == null && mc.gui.screen() != null);
 		run(mc -> mc.createWorldOpenFlows().createFreshLevel(name,
 				new LevelSettings(name, GameType.CREATIVE, new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false), true,
@@ -131,6 +135,21 @@ final class ClientTest {
 		waitUntil("the player in the new world", 2400, mc -> mc.player != null && mc.level != null && !(mc.gui.screen() instanceof LevelLoadingScreen));
 		closeOtherModsScreens();
 		// Time for the chunks around the player to arrive and draw.
+		waitTicks(60);
+	}
+
+	/**
+	 * Saves and quits to the title screen, as the pause menu does, then opens the same world again
+	 * and waits until the player is back in it.
+	 */
+	static void rejoin() {
+		run(mc -> mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE));
+		waitUntil("the world to close", 2400, mc -> mc.level == null && mc.getSingleplayerServer() == null && mc.gui.screen() != null);
+		run(mc -> mc.createWorldOpenFlows().openWorld(world, () -> {
+			throw new AssertionError("Opening the world again was cancelled");
+		}));
+		waitUntil("the player back in the world", 2400, mc -> mc.player != null && mc.level != null && !(mc.gui.screen() instanceof LevelLoadingScreen));
+		closeOtherModsScreens();
 		waitTicks(60);
 	}
 

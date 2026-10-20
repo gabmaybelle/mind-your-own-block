@@ -9,3 +9,6 @@
   (modded ones built on vanilla's too), stairs stay straight instead of bending into a corner, and
   blocks placed into water stay dry. A water bucket still fills a dry block afterwards.
 - A small padlock beside the crosshair while it's held, so you know.
+- Blocks placed that way stay put: a fence, wall, pane or stair keeps its shape when you build
+  around it later, until you break it. A fence placed beside it still reaches toward it, and water
+  poured in still fills it. A block pushed by a piston goes back to normal.

@@ -2,6 +2,7 @@ package com.gabbymaybelle.mindyourownblock.mixin;
 
 import com.gabbymaybelle.mindyourownblock.ExactMode;
 import com.gabbymaybelle.mindyourownblock.ExactPlacing;
+import com.gabbymaybelle.mindyourownblock.StaysPut;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.entity.player.Player;
@@ -30,7 +31,10 @@ abstract class BlockItemMixin {
 		return ExactPlacing.exact(state);
 	}
 
-	/** Setting the block reshapes its neighbours, and they would reshape it back: keep it as placed. */
+	/**
+	 * Setting the block reshapes its neighbours, and they would reshape it back: keep it as placed.
+	 * Once it's in, a block that reshapes to its neighbours is locked so it stays that way.
+	 */
 	@WrapOperation(method = "place", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/world/item/BlockItem;placeBlock(Lnet/minecraft/world/item/context/BlockPlaceContext;Lnet/minecraft/world/level/block/state/BlockState;)Z"))
 	private boolean mindYourOwnBlock$keepWhilePlacing(BlockItem item, BlockPlaceContext context, BlockState state, Operation<Boolean> original) {
@@ -38,6 +42,10 @@ abstract class BlockItemMixin {
 		if (player == null || !ExactMode.isOn(player)) {
 			return original.call(item, context, state);
 		}
-		return ExactPlacing.keeping(context.getClickedPos(), () -> original.call(item, context, state));
+		boolean placed = ExactPlacing.keeping(context.getClickedPos(), () -> original.call(item, context, state));
+		if (placed && StaysPut.isShaped(state)) {
+			StaysPut.lock(context.getLevel(), context.getClickedPos());
+		}
+		return placed;
 	}
 }

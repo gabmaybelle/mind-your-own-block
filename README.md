@@ -21,7 +21,6 @@ the block stays exactly as you placed it and minds its own business until you br
 No new blocks or items, and nothing to set up. Both the server and the player need the mod; on a
 server without it the key simply does nothing.
 
-**Still being built:** "stays put" (the block keeping its shape when its neighbours change) is the
-last part of the first release, 0.1.0. See [PROGRESS.md](PROGRESS.md).
+**Not released yet:** the first release, 0.1.0, is being tested. See [PROGRESS.md](PROGRESS.md).
 
 Made by Gabby with help from Claude, an AI assistant. MIT licence.
