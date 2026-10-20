@@ -59,6 +59,8 @@ One codebase, two jars:
 - **26.3 renumbered keys** (and moved from GLFW to SDL3): read key numbers while the game runs
   (`InputConstants.getKey("key.keyboard.x").getValue()`), never compile a constant in.
 - Vanilla names changed a lot in 26.x: check the merged jar rather than older docs.
+- **Build Better shows a welcome screen** the first time a world loads; the `-PtestBuildBetter`
+  runs write its config (`hasShownOnboarding`) before the game starts so the screen never opens.
 
 ## This mod's job
 

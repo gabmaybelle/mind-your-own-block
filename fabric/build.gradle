@@ -57,3 +57,15 @@ fabricApi {
 		eula = true
 	}
 }
+
+// Build Better opens a welcome screen the first time a world loads, which would sit over the test.
+// Its runs start as a player who has already seen it.
+if (project.hasProperty("testBuildBetter")) {
+	def buildBetterConfig = file('build/run/clientGameTest/config/buildbetter.json')
+	tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+		doFirst {
+			buildBetterConfig.parentFile.mkdirs()
+			buildBetterConfig.text = '{"hasShownOnboarding": true}'
+		}
+	}
+}
