@@ -1,5 +1,7 @@
 package com.gabbymaybelle.mindyourownblock;
 
+import java.util.function.BooleanSupplier;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.StairBlock;
@@ -17,7 +19,45 @@ import net.minecraft.world.level.block.state.properties.WallSide;
  * modded fences, walls, panes and stairs built on vanilla's follow the same rules.
  */
 public final class ExactPlacing {
+	/**
+	 * The spot being placed exactly right now, on this thread (the server's, or the player's own game
+	 * predicting it). Setting the block makes its neighbours reshape, and a neighbour that grows an
+	 * arm toward it would reshape it back; while this is set, that spot keeps its state.
+	 */
+	private static final ThreadLocal<BlockPos> PLACING = new ThreadLocal<>();
+	/** How many threads are placing exactly, so every other neighbour update skips the lookup. */
+	private static volatile int placingCount;
+
 	private ExactPlacing() {
+	}
+
+	/** Runs the placing with {@code pos} kept as placed until it's done. */
+	public static boolean keeping(BlockPos pos, BooleanSupplier place) {
+		BlockPos before = PLACING.get();
+		PLACING.set(pos.immutable());
+		synchronized (ExactPlacing.class) {
+			placingCount++;
+		}
+		try {
+			return place.getAsBoolean();
+		} finally {
+			synchronized (ExactPlacing.class) {
+				placingCount--;
+			}
+			if (before == null) {
+				PLACING.remove();
+			} else {
+				PLACING.set(before);
+			}
+		}
+	}
+
+	/** Whether the block at {@code pos} keeps its state instead of reshaping to a neighbour. */
+	public static boolean keeps(BlockPos pos) {
+		if (placingCount == 0) {
+			return false;
+		}
+		return pos.equals(PLACING.get());
 	}
 
 	/** The state to place instead of the one the game worked out from the neighbours. */

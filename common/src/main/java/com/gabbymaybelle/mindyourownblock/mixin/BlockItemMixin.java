@@ -29,4 +29,15 @@ abstract class BlockItemMixin {
 		}
 		return ExactPlacing.exact(state);
 	}
+
+	/** Setting the block reshapes its neighbours, and they would reshape it back: keep it as placed. */
+	@WrapOperation(method = "place", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/world/item/BlockItem;placeBlock(Lnet/minecraft/world/item/context/BlockPlaceContext;Lnet/minecraft/world/level/block/state/BlockState;)Z"))
+	private boolean mindYourOwnBlock$keepWhilePlacing(BlockItem item, BlockPlaceContext context, BlockState state, Operation<Boolean> original) {
+		Player player = context.getPlayer();
+		if (player == null || !ExactMode.isOn(player)) {
+			return original.call(item, context, state);
+		}
+		return ExactPlacing.keeping(context.getClickedPos(), () -> original.call(item, context, state));
+	}
 }

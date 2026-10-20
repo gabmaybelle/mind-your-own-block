@@ -25,6 +25,11 @@ first, and add this session's row before ending.
   any block with `waterlogged` is dry. It goes by vanilla's block classes and properties, never
   block names, so modded blocks built on vanilla's work too. Buckets are never touched. It runs on
   both sides, so the player's own game shows the shape the server places.
+- **Kept while placing** (`ExactPlacing.keeping`, `mixin/BlockStateBaseMixin`): setting the block
+  reshapes its neighbours, and a neighbour fence that grows an arm toward the new post reshapes the
+  post straight back. So while an exact placement goes in, that spot ignores `updateShape` (a
+  thread-local spot plus a counter, so every other neighbour update in the game costs one read).
+  Session 3's locked positions use the same hook.
 - **The crosshair mark** (`client/ExactHint`): a small padlock (7 by 9 px) just below and right of the
   crosshair while the key is held, only where the crosshair shows (first person, nothing open, HUD
   not hidden). The sprite is a draft until Gabby's art replaces it.

@@ -62,7 +62,8 @@ final class PlacingChecks {
 		if (BuiltInRegistries.BLOCK.containsKey(picket)) {
 			joins(player, next(player, slot), BuiltInRegistries.ITEM.getValue(picket), BuiltInRegistries.BLOCK.getValue(picket), exact,
 					"Macaw's oak picket fence" + with, check);
-			walls(player, next(player, slot), BuiltInRegistries.ITEM.getValue(pillar), BuiltInRegistries.BLOCK.getValue(pillar), exact,
+			// Macaw's pillar walls are fences underneath (arms are true or false, no post), so checked as one.
+			joins(player, next(player, slot), BuiltInRegistries.ITEM.getValue(pillar), BuiltInRegistries.BLOCK.getValue(pillar), exact,
 					"Macaw's andesite pillar wall" + with, check);
 		}
 
