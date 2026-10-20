@@ -8,6 +8,8 @@ import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.gui.screens.Screen;
 
 /**
  * The mod in a real game. Run with {@code ./gradlew :fabric:runClientGameTest}; screenshots land
@@ -22,6 +24,7 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 	public void runTest(ClientGameTestContext ctx) {
 		try (TestSingleplayerContext world = ctx.worldBuilder().create()) {
 			world.getConnection().waitForChunksRender();
+			closeOtherModsScreens(ctx);
 			boolean loaded = world.getServer().computeOnServer(server -> FabricLoader.getInstance().isModLoaded(MindYourOwnBlock.MOD_ID));
 			check(loaded, "the mod is loaded in a new world");
 			key(ctx, world);
@@ -60,6 +63,30 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 		ctx.getInput().releaseKey(ExactKey.KEY);
 		ctx.getInput().releaseKey(options -> options.keyShift);
 		ctx.waitTicks(5);
+	}
+
+	/**
+	 * Closes screens other mods open when a world first loads (Build Better's library shows welcome
+	 * cards), which would otherwise sit over the test and catch its key presses. Done once no screen
+	 * has opened for two seconds; the loading screen is left to finish by itself.
+	 */
+	private static void closeOtherModsScreens(ClientGameTestContext ctx) {
+		int quiet = 0;
+		for (int tick = 0; tick < 600 && quiet < 40; tick++) {
+			boolean open = ctx.computeOnClient(mc -> {
+				Screen screen = mc.gui.screen();
+				if (screen == null) {
+					return false;
+				}
+				if (!(screen instanceof LevelLoadingScreen)) {
+					MindYourOwnBlock.LOGGER.info("[test] closing a screen another mod opened: {}", screen.getClass().getName());
+					mc.gui.setScreen(null);
+				}
+				return true;
+			});
+			quiet = open ? 0 : quiet + 1;
+			ctx.waitTick();
+		}
 	}
 
 	private static boolean serverOn(TestSingleplayerContext world) {

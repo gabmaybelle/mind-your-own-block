@@ -67,15 +67,3 @@ processResources {
 
 tasks.named('jar') { archiveBaseName = "${rootProject.name}-neoforge" }
 tasks.named('sourcesJar') { archiveBaseName = "${rootProject.name}-neoforge" }
-
-// Build Better opens a welcome screen the first time a world loads, which would sit over the test.
-// Its runs start as a player who has already seen it.
-if (project.hasProperty("testBuildBetter")) {
-	def buildBetterConfig = file('build/run/clientTest/config/buildbetter.json')
-	tasks.matching { it.name == 'runClientTest' }.configureEach {
-		doFirst {
-			buildBetterConfig.parentFile.mkdirs()
-			buildBetterConfig.text = '{"hasShownOnboarding": true}'
-		}
-	}
-}

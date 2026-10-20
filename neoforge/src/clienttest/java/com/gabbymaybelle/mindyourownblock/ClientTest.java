@@ -8,6 +8,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.Difficulty;
@@ -126,9 +128,36 @@ final class ClientTest {
 				new WorldOptions(1L, false, false),
 				registries -> registries.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
 				mc.gui.screen()));
-		waitUntil("the player in the new world", 2400, mc -> mc.player != null && mc.level != null && mc.gui.screen() == null);
+		waitUntil("the player in the new world", 2400, mc -> mc.player != null && mc.level != null && !(mc.gui.screen() instanceof LevelLoadingScreen));
+		closeOtherModsScreens();
 		// Time for the chunks around the player to arrive and draw.
 		waitTicks(60);
+	}
+
+	/**
+	 * Closes screens other mods open when a world first loads (Build Better's library shows welcome
+	 * cards), which would otherwise sit over the test and catch its key presses. Done once no screen
+	 * has opened for two seconds; the loading screen is left to finish by itself.
+	 */
+	static void closeOtherModsScreens() {
+		int[] quiet = { 0 };
+		int[] waited = { 0 };
+		STEPS.add(mc -> {
+			Screen screen = mc.gui.screen();
+			if (screen == null) {
+				quiet[0]++;
+			} else {
+				quiet[0] = 0;
+				if (!(screen instanceof LevelLoadingScreen)) {
+					MindYourOwnBlock.LOGGER.info("[test] closing a screen another mod opened: {}", screen.getClass().getName());
+					mc.gui.setScreen(null);
+				}
+			}
+			if (++waited[0] > 600) {
+				throw new AssertionError("Screens kept opening for 30 seconds after the world loaded");
+			}
+			return quiet[0] >= 40;
+		});
 	}
 
 	@SubscribeEvent
