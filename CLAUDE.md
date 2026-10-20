@@ -59,6 +59,8 @@ One codebase, two jars:
   case placed with the key and without it, on the server thread, as the test player;
   `StaysPutChecks`: locked blocks, step by step, then again after the world is reopened). Never in a
   jar.
+- `art/`: the icon's layered Aseprite source (`icon.aseprite`); the jar's icon is
+  `assets/mind_your_own_block/icon.png`. Change both together.
 - `neoforge/src/clienttest/`: the NeoForge in-game test: `ClientTest` runs steps one tick at a time,
   notes every failed check and crashes the game at the end if any failed;
   `MindYourOwnBlockClientTest` holds the same checks as the Fabric one.

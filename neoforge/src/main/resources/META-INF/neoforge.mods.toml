@@ -8,6 +8,7 @@ displayName = "Mind Your Own Block"
 authors = "Gabby"
 description = '''Hold a key while placing and the block keeps the shape you placed it in: no fence joins, no stair corners, no waterlogging.'''
 displayURL = "https://github.com/gabmaybelle/mind-your-own-block"
+logoFile = "assets/mind_your_own_block/icon.png"
 
 [[mixins]]
 config = "mind_your_own_block.mixins.json"

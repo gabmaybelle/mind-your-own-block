@@ -13,6 +13,7 @@
 		"issues": "https://github.com/gabmaybelle/mind-your-own-block/issues"
 	},
 	"license": "MIT",
+	"icon": "assets/mind_your_own_block/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
