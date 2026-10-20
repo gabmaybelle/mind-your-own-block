@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "mind_your_own_block_gametest",
+	"version": "1.0.0",
+	"name": "Mind Your Own Block game tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.gabbymaybelle.mindyourownblock.MindYourOwnBlockClientTest"
+		]
+	},
+	"depends": {
+		"mind_your_own_block": "*"
+	}
+}

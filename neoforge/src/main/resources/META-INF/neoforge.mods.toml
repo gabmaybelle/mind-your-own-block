@@ -1,0 +1,24 @@
+license = "MIT"
+issueTrackerURL = "https://github.com/gabmaybelle/mind-your-own-block/issues"
+
+[[mods]]
+modId = "mind_your_own_block"
+version = "${version}"
+displayName = "Mind Your Own Block"
+authors = "Gabby"
+description = '''Hold a key while placing and the block keeps the shape you placed it in: no fence joins, no stair corners, no waterlogging.'''
+displayURL = "https://github.com/gabmaybelle/mind-your-own-block"
+
+[[dependencies.mind_your_own_block]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.3,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.mind_your_own_block]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.3,26.4)"
+ordering = "NONE"
+side = "BOTH"
