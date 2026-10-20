@@ -12,6 +12,8 @@ sourceSets {
 	clienttest {
 		compileClasspath += sourceSets.main.output
 		runtimeClasspath += sourceSets.main.output
+		// The placing checks both loaders' tests share (common/src/sharedtest).
+		java.srcDir project(':common').file('src/sharedtest/java')
 	}
 }
 

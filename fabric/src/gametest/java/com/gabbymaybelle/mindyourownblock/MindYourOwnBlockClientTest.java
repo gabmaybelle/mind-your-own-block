@@ -1,5 +1,6 @@
 package com.gabbymaybelle.mindyourownblock;
 
+import com.gabbymaybelle.mindyourownblock.client.ExactHint;
 import com.gabbymaybelle.mindyourownblock.client.ExactKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 			boolean loaded = world.getServer().computeOnServer(server -> FabricLoader.getInstance().isModLoaded(MindYourOwnBlock.MOD_ID));
 			check(loaded, "the mod is loaded in a new world");
 			key(ctx, world);
+			placing(ctx, world);
 		}
 		if (!failures.isEmpty()) {
 			throw new AssertionError(failures.size() + " check(s) failed:\n - " + String.join("\n - ", failures));
@@ -64,6 +66,24 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 		ctx.getInput().releaseKey(ExactKey.KEY);
 		ctx.getInput().releaseKey(options -> options.keyShift);
 		ctx.waitTicks(5);
+	}
+
+	/**
+	 * Exact placing, with the key held and then without it (PlacingChecks, shared with NeoForge): no
+	 * joining, straight stairs, dry blocks. The crosshair mark shows only while the key is held.
+	 */
+	private void placing(ClientGameTestContext ctx, TestSingleplayerContext world) {
+		ctx.getInput().holdKey(ExactKey.KEY);
+		ctx.waitTicks(5);
+		check(ctx.computeOnClient(ExactHint::showing), "the crosshair mark shows while the key is held");
+		ctx.takeScreenshot("exact-hint");
+		world.getServer().runOnServer(server -> PlacingChecks.run(server.getPlayerList().getPlayers().getFirst(), true, this::check));
+		ctx.getInput().releaseKey(ExactKey.KEY);
+		ctx.waitTicks(5);
+		check(!ctx.computeOnClient(ExactHint::showing), "the crosshair mark is gone once the key is let go");
+		world.getServer().runOnServer(server -> PlacingChecks.run(server.getPlayerList().getPlayers().getFirst(), false, this::check));
+		ctx.waitTicks(10);
+		ctx.takeScreenshot("placed-without-the-key");
 	}
 
 	/**

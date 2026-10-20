@@ -5,3 +5,7 @@
 - A button to hold while placing: the mouse's side button to start with (change it in Controls,
   under Mind Your Own Block). It's its own button, not sneak, so it works on scaffolding and while
   sneaking.
+- Holding it while placing: fences, walls, glass panes and iron bars don't join their neighbours
+  (modded ones built on vanilla's too), stairs stay straight instead of bending into a corner, and
+  blocks placed into water stay dry. A water bucket still fills a dry block afterwards.
+- A small padlock beside the crosshair while it's held, so you know.

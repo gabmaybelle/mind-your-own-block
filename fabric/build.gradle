@@ -57,3 +57,5 @@ fabricApi {
 		eula = true
 	}
 }
+// The placing checks both loaders' tests share (common/src/sharedtest). Never in the jar.
+sourceSets.gametest.java.srcDir project(':common').file('src/sharedtest/java')

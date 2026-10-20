@@ -18,10 +18,16 @@ first, and add this session's row before ending.
   player id. Messages on one connection arrive in order, so the server knows before that player's
   block is placed. `ExactMode.isOn(player)` answers on either side (the player's own game answers
   from the key itself, so its prediction matches the server).
-- **Placing** (planned, session 2): one hook where a block item works out the state it places. In
-  exact mode it clears the join sides (fences, walls, panes, bars), sets stairs straight and sets
-  waterlogged to false, reading block properties, never block names, so modded blocks built on
-  vanilla's work too. Buckets are never touched.
+- **Placing** (`ExactPlacing`, `mixin/BlockItemMixin`): one hook, wrapping the
+  `getPlacementState` call inside `BlockItem.place`, so block items that work their state out their
+  own way are caught too. In exact mode fences, panes and bars (`CrossCollisionBlock`) lose their
+  arms, walls (`WallBlock`) lose theirs and show their post, stairs (`StairBlock`) are straight, and
+  any block with `waterlogged` is dry. It goes by vanilla's block classes and properties, never
+  block names, so modded blocks built on vanilla's work too. Buckets are never touched. It runs on
+  both sides, so the player's own game shows the shape the server places.
+- **The crosshair mark** (`client/ExactHint`): a small padlock (7 by 9 px) just below and right of the
+  crosshair while the key is held, only where the crosshair shows (first person, nothing open, HUD
+  not hidden). The sprite is a draft until Gabby's art replaces it.
 - **Stays put** (planned, session 3): each chunk keeps a small list of locked positions (the
   loaders' chunk-data attachments, saved and synced to players); a locked block keeps its state when
   a neighbour changes. The lock clears when the block at that spot becomes a different block
@@ -41,6 +47,8 @@ One codebase, two jars:
 - `fabric/` and `neoforge/`: the entrypoints (one for both sides, one for the player's game).
   Their `build.gradle` compiles `common`'s sources straight into their jar.
 - `fabric/src/gametest/`: the Fabric client game test (`MindYourOwnBlockClientTest`).
+- `common/src/sharedtest/`: checks both loaders' in-game tests compile in (`PlacingChecks`: each
+  case placed with the key and without it, on the server thread, as the test player). Never in a jar.
 - `neoforge/src/clienttest/`: the NeoForge in-game test: `ClientTest` runs steps one tick at a time,
   notes every failed check and crashes the game at the end if any failed;
   `MindYourOwnBlockClientTest` holds the same checks as the Fabric one.

@@ -5,6 +5,7 @@ import static com.gabbymaybelle.mindyourownblock.ClientTest.createWorld;
 import static com.gabbymaybelle.mindyourownblock.ClientTest.run;
 import static com.gabbymaybelle.mindyourownblock.ClientTest.waitTicks;
 
+import com.gabbymaybelle.mindyourownblock.client.ExactHint;
 import com.gabbymaybelle.mindyourownblock.client.ExactKey;
 import java.util.Arrays;
 import net.minecraft.client.Minecraft;
@@ -23,6 +24,7 @@ final class MindYourOwnBlockClientTest {
 		createWorld("mind-your-own-block-clienttest");
 		run(mc -> check(ModList.get().isLoaded(MindYourOwnBlock.MOD_ID), "the mod is loaded in a new world"));
 		key();
+		placing();
 	}
 
 	/** The key, the same checks as the Fabric test's {@code key}. */
@@ -57,6 +59,33 @@ final class MindYourOwnBlockClientTest {
 			mc.options.keyShift.setDown(false);
 		});
 		waitTicks(5);
+	}
+
+	/** Exact placing, the same checks as the Fabric test's {@code placing}. */
+	private static void placing() {
+		run(mc -> ExactKey.KEY.setDown(true));
+		waitTicks(5);
+		run(mc -> {
+			check(ExactHint.showing(mc), "the crosshair mark shows while the key is held");
+			onServer(mc, server -> PlacingChecks.run(server.getPlayerList().getPlayers().getFirst(), true, ClientTest::check));
+		});
+		ClientTest.screenshot();
+		run(mc -> ExactKey.KEY.setDown(false));
+		waitTicks(5);
+		run(mc -> {
+			check(!ExactHint.showing(mc), "the crosshair mark is gone once the key is let go");
+			onServer(mc, server -> PlacingChecks.run(server.getPlayerList().getPlayers().getFirst(), false, ClientTest::check));
+		});
+		waitTicks(10);
+		ClientTest.screenshot();
+	}
+
+	private static void onServer(Minecraft mc, java.util.function.Consumer<IntegratedServer> action) {
+		IntegratedServer server = mc.getSingleplayerServer();
+		if (server == null) {
+			throw new AssertionError("No singleplayer server");
+		}
+		server.executeBlocking(() -> action.accept(server));
 	}
 
 	private static boolean serverOn(Minecraft mc) {
