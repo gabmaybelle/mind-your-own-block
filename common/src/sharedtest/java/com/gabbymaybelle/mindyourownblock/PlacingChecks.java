@@ -93,6 +93,10 @@ final class PlacingChecks {
 		check.check(placed.is(block), what + " is placed (got " + placed + ")");
 		boolean joined = placed.hasProperty(CrossCollisionBlock.EAST) && placed.getValue(CrossCollisionBlock.EAST);
 		check.check(joined != exact, what + (exact ? " stands alone" : " joins its neighbour") + " (got " + placed + ")");
+		// The neighbour doesn't reach toward an exact one either (Gabby, 2026-10-21), and does toward a normal one.
+		BlockState neighbour = player.level().getBlockState(at.east());
+		boolean reaches = neighbour.hasProperty(CrossCollisionBlock.WEST) && neighbour.getValue(CrossCollisionBlock.WEST);
+		check.check(reaches != exact, what + ": its neighbour " + (exact ? "doesn't reach toward it" : "joins it") + " (got " + neighbour + ")");
 	}
 
 	private static void walls(ServerPlayer player, BlockPos at, Item item, Block block, boolean exact, String what, Check check) {
@@ -101,6 +105,9 @@ final class PlacingChecks {
 		check.check(placed.is(block), what + " is placed (got " + placed + ")");
 		boolean joined = placed.hasProperty(WallBlock.EAST) && placed.getValue(WallBlock.EAST) != WallSide.NONE;
 		check.check(joined != exact, what + (exact ? " stands alone" : " joins its neighbour") + " (got " + placed + ")");
+		BlockState neighbour = player.level().getBlockState(at.east());
+		boolean reaches = neighbour.hasProperty(WallBlock.WEST) && neighbour.getValue(WallBlock.WEST) != WallSide.NONE;
+		check.check(reaches != exact, what + ": its neighbour " + (exact ? "doesn't reach toward it" : "joins it") + " (got " + neighbour + ")");
 		if (exact) {
 			check.check(placed.hasProperty(WallBlock.UP) && placed.getValue(WallBlock.UP), what + " shows its post (got " + placed + ")");
 		}

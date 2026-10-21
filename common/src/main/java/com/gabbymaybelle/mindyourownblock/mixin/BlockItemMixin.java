@@ -25,8 +25,12 @@ abstract class BlockItemMixin {
 	private BlockState mindYourOwnBlock$placeExactly(BlockItem item, BlockPlaceContext context, Operation<BlockState> original) {
 		BlockState state = original.call(item, context);
 		Player player = context.getPlayer();
-		if (state == null || player == null || !ExactMode.isOn(player)) {
-			return state;
+		if (state == null) {
+			return null;
+		}
+		if (player == null || !ExactMode.isOn(player)) {
+			// Placed normally beside a locked block: it doesn't reach toward it or bend because of it.
+			return StaysPut.isShaped(state) ? StaysPut.awayFromKept(context.getLevel(), context.getClickedPos(), state) : state;
 		}
 		return ExactPlacing.exact(state);
 	}

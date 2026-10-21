@@ -17,7 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Where a block reshapes itself because a neighbour changed. A block placed exactly (being placed
  * right now, or locked) lets vanilla do everything else it does here (water, breaking when it can't
  * survive) and then gets its arms, post and stair shape back. This runs on every neighbour update in
- * the game, so the first check is whether the block is a kind that reshapes at all.
+ * the game, so the first check is whether the block is a kind that reshapes at all. A normal block's
+ * new shape leaves out any locked neighbour.
  */
 @Mixin(BlockBehaviour.BlockStateBase.class)
 abstract class BlockStateBaseMixin {
@@ -25,8 +26,14 @@ abstract class BlockStateBaseMixin {
 	private void mindYourOwnBlock$keepShape(LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction directionToNeighbour,
 			BlockPos neighbourPos, BlockState neighbourState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
 		BlockState before = (BlockState) (Object) this;
-		if (StaysPut.isShaped(before) && StaysPut.keeps(level, pos)) {
+		if (!StaysPut.isShaped(before)) {
+			return;
+		}
+		if (StaysPut.keeps(level, pos)) {
 			cir.setReturnValue(StaysPut.keepShape(before, cir.getReturnValue()));
+		} else if (StaysPut.isShaped(cir.getReturnValue())) {
+			// A normal block beside a locked one doesn't reach toward it or bend because of it.
+			cir.setReturnValue(StaysPut.awayFromKept(level, pos, cir.getReturnValue()));
 		}
 	}
 }

@@ -74,9 +74,12 @@ final class StaysPutChecks {
 			PlacingChecks.place(player, postA.relative(side), Items.OAK_FENCE, 0F);
 		}
 		check.check(alone(level.getBlockState(postA)), "a locked post stays alone with a fence on every side (" + level.getBlockState(postA) + ")");
-		BlockState east = level.getBlockState(postA.east());
-		check.check(east.is(Blocks.OAK_FENCE) && east.getValue(CrossCollisionBlock.WEST),
-				"a normal fence beside a locked post still reaches toward it (" + east + ")");
+		// Gabby, 2026-10-21: a normal fence beside a locked post ends its line instead of reaching toward it.
+		for (Direction side : Direction.Plane.HORIZONTAL) {
+			BlockState beside = level.getBlockState(postA.relative(side));
+			check.check(beside.is(Blocks.OAK_FENCE) && !beside.getValue(CrossCollisionBlock.PROPERTY_BY_DIRECTION.get(side.getOpposite())),
+					"a normal fence placed " + side.getName() + " of a locked post doesn't reach toward it (" + beside + ")");
+		}
 		for (Direction side : Direction.Plane.HORIZONTAL) {
 			level.setBlock(postA.relative(side), Blocks.AIR.defaultBlockState(), 3);
 		}
@@ -103,6 +106,11 @@ final class StaysPutChecks {
 		BlockState stairNow = level.getBlockState(stair);
 		check.check(stairNow.getValue(StairBlock.SHAPE) == StairsShape.STRAIGHT,
 				"a locked stair stays straight when a stair is placed in front of it (" + stairNow + ")");
+		// A normal stair placed facing east just west of the locked stair would bend into a corner
+		// because of it (the locked stair is behind it, crossways); it stays straight instead.
+		BlockState beside = PlacingChecks.place(player, stair.west(), Items.OAK_STAIRS, -90F);
+		check.check(beside.is(Blocks.OAK_STAIRS) && beside.getValue(StairBlock.SHAPE) == StairsShape.STRAIGHT,
+				"a normal stair beside a locked stair doesn't bend because of it (" + beside + ")");
 
 		// Post C: a neighbour that stays, for the client and rejoin checks.
 		PlacingChecks.place(player, postC.east(), Items.OAK_FENCE, 0F);

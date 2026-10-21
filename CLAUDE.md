@@ -37,8 +37,10 @@ first, and add this session's row before ending.
   while an exact placement goes in (`ExactPlacing.keeping`: the neighbour that grows an arm toward
   the new post would otherwise reshape it straight back). The lock ends when the block at that spot
   becomes a different block (`LevelChunk.setBlockState`): broken, replaced, or pushed by a piston
-  (which turns it into a moving block first). A normal fence beside a locked post still reaches
-  toward it; a water bucket still fills a locked post and the lock stays. Any waterloggable block
+  (which turns it into a moving block first). A normal fence, wall, pane or bars beside a locked block ends its line at its own post
+  instead of reaching toward it, and a normal stair doesn't bend into a corner because of a locked
+  stair (`StaysPut.awayFromKept`, on placing and on every reshape; Gabby, 2026-10-21; only blocks
+  that join or bend count, so a slab locked to stay dry is still joined); a water bucket still fills a locked post and the lock stays. Any waterloggable block
   placed with the key is locked too (`StaysPut.isLockable`), and spreading water may not fill a
   locked dry block (`mixin/FlowingFluidMixin`, on `FlowingFluid.canHoldSpecificFluid`): in a pond,
   vanilla turns a spot with two water sources beside it into a source, which would pour straight

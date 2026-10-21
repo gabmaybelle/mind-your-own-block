@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 (not released yet)
+
+- A fence, wall, pane or iron bars placed normally beside one you placed with the button now ends
+  its line at its own post instead of reaching toward it, and a stair placed normally beside one
+  doesn't bend into a corner because of it. The lone block really stands on its own.
+
 ## 0.1.0
 
 - A button to hold while placing: the mouse's side button to start with (change it in Controls,

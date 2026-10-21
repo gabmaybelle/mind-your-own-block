@@ -2,16 +2,22 @@ package com.gabbymaybelle.mindyourownblock;
 
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.StairsShape;
+import net.minecraft.world.level.block.state.properties.WallSide;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 /**
@@ -20,7 +26,8 @@ import net.minecraft.world.level.chunk.LevelChunk;
  * around it, until the block at that spot becomes a different block (broken, replaced, or pushed by
  * a piston, which turns it into a moving block first). Anything else a block does when a neighbour
  * changes still happens; only the shape and the dryness are kept. Water poured from a bucket still
- * fills it: only water spreading by itself is kept out.
+ * fills it: only water spreading by itself is kept out. Normal blocks beside a locked one don't
+ * reach toward it or bend because of it ({@link #awayFromKept}).
  */
 public final class StaysPut {
 	/** The properties that make up a block's shape: the arms, a wall's post and a stair's corner. */
@@ -52,7 +59,7 @@ public final class StaysPut {
 	}
 
 	/** Whether the block at {@code pos} keeps its shape: being placed exactly right now, or locked. */
-	public static boolean keeps(LevelReader level, BlockPos pos) {
+	public static boolean keeps(BlockGetter level, BlockPos pos) {
 		return ExactPlacing.keeps(pos) || isLocked(level, pos);
 	}
 
@@ -71,6 +78,89 @@ public final class StaysPut {
 
 	private static <T extends Comparable<T>> BlockState copy(BlockState from, BlockState to, Property<T> property) {
 		return to.setValue(property, from.getValue(property));
+	}
+
+	/**
+	 * Whether a neighbour of a normal block counts as not there when that block works out its shape:
+	 * a block that joins or bends, placed with the key (being placed right now, or locked). A block
+	 * locked only to keep it dry (a slab, a lantern) is joined as usual.
+	 */
+	private static boolean ignored(BlockGetter level, BlockPos pos) {
+		return keeps(level, pos) && isShaped(level.getBlockState(pos));
+	}
+
+	/**
+	 * The shape a normal (not locked) block takes beside locked ones (Gabby, 2026-10-21): a fence,
+	 * wall, pane or bars ends its line at its own post instead of reaching toward a locked block, and a
+	 * stair doesn't bend into a corner because of a locked stair.
+	 */
+	public static BlockState awayFromKept(BlockGetter level, BlockPos pos, BlockState state) {
+		Block block = state.getBlock();
+		if (block instanceof StairBlock) {
+			if (state.hasProperty(StairBlock.SHAPE) && state.getValue(StairBlock.SHAPE) != StairsShape.STRAIGHT) {
+				return state.setValue(StairBlock.SHAPE, stairShape(state, level, pos));
+			}
+			return state;
+		}
+		boolean cut = false;
+		for (Direction side : Direction.Plane.HORIZONTAL) {
+			if (block instanceof CrossCollisionBlock) {
+				BooleanProperty arm = CrossCollisionBlock.PROPERTY_BY_DIRECTION.get(side);
+				if (state.hasProperty(arm) && state.getValue(arm) && ignored(level, pos.relative(side))) {
+					state = state.setValue(arm, false);
+				}
+			} else if (block instanceof WallBlock) {
+				EnumProperty<WallSide> arm = WallBlock.PROPERTY_BY_DIRECTION.get(side);
+				if (state.hasProperty(arm) && state.getValue(arm) != WallSide.NONE && ignored(level, pos.relative(side))) {
+					state = state.setValue(arm, WallSide.NONE);
+					cut = true;
+				}
+			}
+		}
+		// A wall that lost an arm shows its post where vanilla would: at an end, a corner or alone.
+		if (cut && state.hasProperty(WallBlock.UP) && endOrCorner(state)) {
+			state = state.setValue(WallBlock.UP, true);
+		}
+		return state;
+	}
+
+	private static boolean endOrCorner(BlockState wall) {
+		boolean n = wall.getValue(WallBlock.NORTH) == WallSide.NONE, s = wall.getValue(WallBlock.SOUTH) == WallSide.NONE;
+		boolean e = wall.getValue(WallBlock.EAST) == WallSide.NONE, w = wall.getValue(WallBlock.WEST) == WallSide.NONE;
+		return n && s && e && w || n != s || e != w;
+	}
+
+	/** Vanilla's stair shape (StairBlock.getStairsShape), with ignored stairs counted as not there. */
+	private static StairsShape stairShape(BlockState state, BlockGetter level, BlockPos pos) {
+		Direction facing = state.getValue(StairBlock.FACING);
+		BlockPos behind = pos.relative(facing);
+		BlockState behindState = level.getBlockState(behind);
+		if (plainStair(level, behind, behindState) && state.getValue(StairBlock.HALF) == behindState.getValue(StairBlock.HALF)) {
+			Direction behindFacing = behindState.getValue(StairBlock.FACING);
+			if (behindFacing.getAxis() != facing.getAxis() && canTakeShape(state, level, pos, behindFacing.getOpposite())) {
+				return behindFacing == facing.getCounterClockWise() ? StairsShape.OUTER_LEFT : StairsShape.OUTER_RIGHT;
+			}
+		}
+		BlockPos front = pos.relative(facing.getOpposite());
+		BlockState frontState = level.getBlockState(front);
+		if (plainStair(level, front, frontState) && state.getValue(StairBlock.HALF) == frontState.getValue(StairBlock.HALF)) {
+			Direction frontFacing = frontState.getValue(StairBlock.FACING);
+			if (frontFacing.getAxis() != facing.getAxis() && canTakeShape(state, level, pos, frontFacing)) {
+				return frontFacing == facing.getCounterClockWise() ? StairsShape.INNER_LEFT : StairsShape.INNER_RIGHT;
+			}
+		}
+		return StairsShape.STRAIGHT;
+	}
+
+	private static boolean canTakeShape(BlockState state, BlockGetter level, BlockPos pos, Direction side) {
+		BlockPos next = pos.relative(side);
+		BlockState neighbour = level.getBlockState(next);
+		return !plainStair(level, next, neighbour) || neighbour.getValue(StairBlock.FACING) != state.getValue(StairBlock.FACING)
+				|| neighbour.getValue(StairBlock.HALF) != state.getValue(StairBlock.HALF);
+	}
+
+	private static boolean plainStair(BlockGetter level, BlockPos pos, BlockState state) {
+		return state.getBlock() instanceof StairBlock && !keeps(level, pos);
 	}
 
 	/** Whether a lock is kept for {@code pos}, on whichever side asks. Only for a loaded, real world. */
