@@ -21,6 +21,6 @@ the block stays exactly as you placed it and minds its own business until you br
 No new blocks or items, and nothing to set up. Both the server and the player need the mod; on a
 server without it the key simply does nothing.
 
-**Not released yet:** the first release, 0.1.0, is being tested. See [PROGRESS.md](PROGRESS.md).
+**Download:** [GitHub releases](https://github.com/gabmaybelle/mind-your-own-block/releases)
 
 Made by Gabby with help from Claude, an AI assistant. MIT licence.
