@@ -1,5 +1,6 @@
 package com.gabbymaybelle.mindyourownblock.mixin;
 
+import com.gabbymaybelle.mindyourownblock.ExactPlacing;
 import com.gabbymaybelle.mindyourownblock.StaysPut;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,6 +28,10 @@ abstract class BlockStateBaseMixin {
 			BlockPos neighbourPos, BlockState neighbourState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
 		BlockState before = (BlockState) (Object) this;
 		if (!StaysPut.isShaped(before)) {
+			return;
+		}
+		// No exact placing going on and no lock near: nothing to keep or leave out (almost every update).
+		if (!ExactPlacing.placingAnything() && !StaysPut.locksNear(level, pos)) {
 			return;
 		}
 		if (StaysPut.keeps(level, pos)) {

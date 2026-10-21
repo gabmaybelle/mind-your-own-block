@@ -52,6 +52,11 @@ public final class ExactPlacing {
 		}
 	}
 
+	/** Whether any thread is placing exactly right now. */
+	public static boolean placingAnything() {
+		return placingCount != 0;
+	}
+
 	/** Whether the block at {@code pos} keeps its state instead of reshaping to a neighbour. */
 	public static boolean keeps(BlockPos pos) {
 		if (placingCount == 0) {

@@ -95,6 +95,11 @@ public final class StaysPut {
 	 * stair doesn't bend into a corner because of a locked stair.
 	 */
 	public static BlockState awayFromKept(BlockGetter level, BlockPos pos, BlockState state) {
+		// The common case first: no lock anywhere near, so nothing to look up per neighbour. This runs
+		// on every reshape of a fence, wall, pane, bars or stair in the game.
+		if (!ExactPlacing.placingAnything() && !locksNear(level, pos)) {
+			return state;
+		}
 		Block block = state.getBlock();
 		if (block instanceof StairBlock) {
 			if (state.hasProperty(StairBlock.SHAPE) && state.getValue(StairBlock.SHAPE) != StairsShape.STRAIGHT) {
@@ -122,6 +127,31 @@ public final class StaysPut {
 			state = state.setValue(WallBlock.UP, true);
 		}
 		return state;
+	}
+
+	/**
+	 * Whether the chunk holding {@code pos}, or for a spot on its edge the chunk beside it, keeps any
+	 * locks: the neighbours a block looks at (one block away) are in one of those. One chunk lookup in
+	 * the common case instead of one per neighbour.
+	 */
+	public static boolean locksNear(BlockGetter level, BlockPos pos) {
+		if (!(level instanceof Level world)) {
+			return false;
+		}
+		int cx = SectionPos.blockToSectionCoord(pos.getX()), cz = SectionPos.blockToSectionCoord(pos.getZ());
+		int lx = pos.getX() & 15, lz = pos.getZ() & 15;
+		int dx = lx <= 1 ? -1 : lx >= 14 ? 1 : 0, dz = lz <= 1 ? -1 : lz >= 14 ? 1 : 0;
+		return hasLocks(world, cx, cz) || dx != 0 && hasLocks(world, cx + dx, cz) || dz != 0 && hasLocks(world, cx, cz + dz)
+				|| dx != 0 && dz != 0 && hasLocks(world, cx + dx, cz + dz);
+	}
+
+	private static boolean hasLocks(Level world, int cx, int cz) {
+		LevelChunk chunk = world.getChunkSource().getChunkNow(cx, cz);
+		if (chunk == null) {
+			return false;
+		}
+		Locks locks = Platform.chunks().locks(chunk);
+		return locks != null && !locks.isEmpty();
 	}
 
 	private static boolean endOrCorner(BlockState wall) {
