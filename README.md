@@ -21,6 +21,6 @@ the block stays exactly as you placed it and minds its own business until you br
 No new blocks or items, and nothing to set up. Both the server and the player need the mod; on a
 server without it the key simply does nothing.
 
-**Download:** [GitHub releases](https://github.com/gabmaybelle/mind-your-own-block/releases)
+**Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/mind-your-own-block) · [GitHub releases](https://github.com/gabmaybelle/mind-your-own-block/releases)
 
 Made by Gabby with help from Claude, an AI assistant. MIT licence.
