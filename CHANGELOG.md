@@ -1,10 +1,13 @@
 # Changelog
 
-## 0.2.0 (not released yet)
+## 0.2.0
 
 - A fence, wall, pane or iron bars placed normally beside one you placed with the button now ends
   its line at its own post instead of reaching toward it, and a stair placed normally beside one
-  doesn't bend into a corner because of it. The lone block really stands on its own.
+  doesn't bend into a corner because of it. The lone block really stands on its own. Fences from
+  0.1.0 that reach toward a lone post let go the next time anything beside them changes.
+- Lighter on the game: fences, walls, panes and stairs far from any block placed with the button
+  cost next to nothing extra when they change shape.
 
 ## 0.1.0
 
