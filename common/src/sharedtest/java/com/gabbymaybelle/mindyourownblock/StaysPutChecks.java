@@ -22,14 +22,17 @@ import net.minecraft.world.level.block.state.properties.StairsShape;
  * {@link #clientAgrees} on the player's own game, and {@link #afterRejoin} once the world has been
  * saved, closed and opened again.
  *
- * <p>Four spots on their own stone patch, west of the player: post A (neighbours, a bucket, then
- * broken), the stair, post B (pushed by a piston) and post C (kept, for the rejoin).
+ * <p>Five spots on their own stone patch, west of the player: post A (neighbours, a bucket, then
+ * broken), the stair, post B (pushed by a piston), post C (kept, for the rejoin) and the pond post (a
+ * dry post in the middle of a 3 by 3 pond, which vanilla would fill: two water sources beside a
+ * spot make it a source too).
  */
 final class StaysPutChecks {
 	private static BlockPos postA;
 	private static BlockPos stair;
 	private static BlockPos postB;
 	private static BlockPos postC;
+	private static BlockPos pondPost;
 	private static BlockState postCState;
 
 	private StaysPutChecks() {
@@ -45,10 +48,18 @@ final class StaysPutChecks {
 		for (BlockPos post : new BlockPos[] { postA, postB, postC }) {
 			PlacingChecks.place(player, post, Items.OAK_FENCE, 0F);
 		}
+		// The pond: sunk into the patch floor, with stone all round, so the water has nowhere to go.
+		pondPost = PlacingChecks.clear(player.level(), base.offset(-24, 0, 0)).below();
+		for (BlockPos at : BlockPos.betweenClosed(pondPost.offset(-1, 0, -1), pondPost.offset(1, 0, 1))) {
+			player.level().setBlock(at, Blocks.WATER.defaultBlockState(), 3);
+		}
+		PlacingChecks.place(player, pondPost, Items.OAK_FENCE, 0F);
+		check.check(!player.level().getBlockState(pondPost).getValue(BlockStateProperties.WATERLOGGED),
+				"a post placed with the key in the middle of a pond is dry (" + player.level().getBlockState(pondPost) + ")");
 		// Facing north, so a stair placed in front of it later (crossways) would bend it.
 		PlacingChecks.place(player, stair, Items.OAK_STAIRS, 180F);
 		ServerLevel level = player.level();
-		for (BlockPos at : new BlockPos[] { postA, stair, postB, postC }) {
+		for (BlockPos at : new BlockPos[] { postA, stair, postB, postC, pondPost }) {
 			check.check(StaysPut.isLocked(level, at), "a block placed with the key is locked (" + level.getBlockState(at) + ")");
 		}
 	}
@@ -114,6 +125,18 @@ final class StaysPutChecks {
 		BlockState after = level.getBlockState(moved);
 		check.check(after.is(Blocks.OAK_FENCE) && after.getValue(CrossCollisionBlock.EAST),
 				"a pushed post joins a new neighbour like vanilla (" + after + ")");
+
+		// The pond post, a second of game time later: the pond hasn't poured into it, and a bucket still fills it.
+		BlockState pond = level.getBlockState(pondPost);
+		check.check(pond.is(Blocks.OAK_FENCE) && !pond.getValue(BlockStateProperties.WATERLOGGED),
+				"a dry post in the middle of a pond is still dry after the water has had time to flow (" + pond + ")");
+		((BucketItem) Items.WATER_BUCKET).emptyContents(player, level, pondPost, null);
+		BlockState poured = level.getBlockState(pondPost);
+		check.check(poured.getValue(BlockStateProperties.WATERLOGGED) && StaysPut.isLocked(level, pondPost),
+				"a water bucket still fills the dry pond post, which stays locked (" + poured + ")");
+		for (BlockPos at : BlockPos.betweenClosed(pondPost.offset(-1, 0, -1), pondPost.offset(1, 0, 1))) {
+			level.setBlock(at, Blocks.STONE.defaultBlockState(), 3);
+		}
 	}
 
 	/** On the player's own game: it knows post C is locked, and shows it as the server has it. */

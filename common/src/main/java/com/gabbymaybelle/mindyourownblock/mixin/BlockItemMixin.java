@@ -33,7 +33,8 @@ abstract class BlockItemMixin {
 
 	/**
 	 * Setting the block reshapes its neighbours, and they would reshape it back: keep it as placed.
-	 * Once it's in, a block that reshapes to its neighbours is locked so it stays that way.
+	 * Once it's in, a block that reshapes to its neighbours, or that water could flow into, is locked
+	 * so it stays that way.
 	 */
 	@WrapOperation(method = "place", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/world/item/BlockItem;placeBlock(Lnet/minecraft/world/item/context/BlockPlaceContext;Lnet/minecraft/world/level/block/state/BlockState;)Z"))
@@ -43,7 +44,7 @@ abstract class BlockItemMixin {
 			return original.call(item, context, state);
 		}
 		boolean placed = ExactPlacing.keeping(context.getClickedPos(), () -> original.call(item, context, state));
-		if (placed && StaysPut.isShaped(state)) {
+		if (placed && StaysPut.isLockable(state)) {
 			StaysPut.lock(context.getLevel(), context.getClickedPos());
 		}
 		return placed;

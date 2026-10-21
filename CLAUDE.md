@@ -38,7 +38,12 @@ first, and add this session's row before ending.
   the new post would otherwise reshape it straight back). The lock ends when the block at that spot
   becomes a different block (`LevelChunk.setBlockState`): broken, replaced, or pushed by a piston
   (which turns it into a moving block first). A normal fence beside a locked post still reaches
-  toward it; a water bucket still fills a locked post and the lock stays. Never locked in world
+  toward it; a water bucket still fills a locked post and the lock stays. Any waterloggable block
+  placed with the key is locked too (`StaysPut.isLockable`), and spreading water may not fill a
+  locked dry block (`mixin/FlowingFluidMixin`, on `FlowingFluid.canHoldSpecificFluid`): in a pond,
+  vanilla turns a spot with two water sources beside it into a source, which would pour straight
+  into a dry post. Buckets and dispensers fill blocks through `canPlaceLiquid` directly, so they
+  still work. Never locked in world
   generation (only a real `Level` counts). The reshape hook runs on every neighbour update, so its
   first check is whether the block is a kind that reshapes at all.
 - **Nothing runs every tick** on the server. Work happens only when someone places or a neighbour
