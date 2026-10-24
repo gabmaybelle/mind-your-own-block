@@ -14,11 +14,12 @@ import net.minecraft.client.Minecraft;
  * same tick as the key goes down is already exact.
  */
 public final class ExactKey {
-	public static final KeyMapping.Category CATEGORY = new KeyMapping.Category(MindYourOwnBlock.id("keys"));
+	/** The Controls heading (1.21.1 names categories by translation key). */
+	public static final String CATEGORY = "key.category." + MindYourOwnBlock.MOD_ID + ".keys";
 	/**
 	 * The default: the mouse's first side button ("Mouse 4"), so the hand on the mouse holds it while
-	 * placing (Gabby's pick, 2026-10-20). Looked up while the game runs: 26.3 renumbered keys and
-	 * mouse buttons, so a constant would be compiled in with one version's number.
+	 * placing (Gabby's pick, 2026-10-20). Looked up by name while the game runs, as on 26.x, so the
+	 * same code reads the right number on every version.
 	 */
 	private static final InputConstants.Key DEFAULT = InputConstants.getKey("key.mouse.4");
 	public static final KeyMapping KEY = new KeyMapping("key." + MindYourOwnBlock.MOD_ID + ".exact",

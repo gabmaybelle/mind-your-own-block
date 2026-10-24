@@ -5,10 +5,10 @@ import com.gabbymaybelle.mindyourownblock.client.ExactKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
-import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
-import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
-import net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave;
+import com.gabbymaybelle.mindyourownblock.harness.ClientGameTest;
+import com.gabbymaybelle.mindyourownblock.harness.ClientGameTestContext;
+import com.gabbymaybelle.mindyourownblock.harness.TestSingleplayerContext;
+import com.gabbymaybelle.mindyourownblock.harness.TestWorldSave;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,14 +19,14 @@ import net.minecraft.client.gui.screens.Screen;
  * lands, and each check is proven by running it once with the feature switched off. The NeoForge
  * jar runs the same checks (neoforge/src/clienttest).
  */
-public class MindYourOwnBlockClientTest implements FabricClientGameTest {
+public class MindYourOwnBlockClientTest implements ClientGameTest {
 	private final List<String> failures = new ArrayList<>();
 
 	@Override
 	public void runTest(ClientGameTestContext ctx) {
 		TestWorldSave save;
 		try (TestSingleplayerContext world = ctx.worldBuilder().create()) {
-			world.getConnection().waitForChunksRender();
+			world.waitForChunksRender();
 			closeOtherModsScreens(ctx);
 			boolean loaded = world.getServer().computeOnServer(server -> FabricLoader.getInstance().isModLoaded(MindYourOwnBlock.MOD_ID));
 			check(loaded, "the mod is loaded in a new world");
@@ -37,7 +37,7 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 		}
 		// Saved and closed: open it again and check the locks came back with it.
 		try (TestSingleplayerContext world = save.open()) {
-			world.getConnection().waitForChunksRender();
+			world.waitForChunksRender();
 			closeOtherModsScreens(ctx);
 			world.getServer().runOnServer(server -> StaysPutChecks.afterRejoin(server.getPlayerList().getPlayers().getFirst(), this::check));
 			ctx.waitTicks(10);
@@ -126,13 +126,13 @@ public class MindYourOwnBlockClientTest implements FabricClientGameTest {
 		int quiet = 0;
 		for (int tick = 0; tick < 600 && quiet < 40; tick++) {
 			boolean open = ctx.computeOnClient(mc -> {
-				Screen screen = mc.gui.screen();
+				Screen screen = mc.screen;
 				if (screen == null) {
 					return false;
 				}
 				if (!(screen instanceof LevelLoadingScreen)) {
 					MindYourOwnBlock.LOGGER.info("[test] closing a screen another mod opened: {}", screen.getClass().getName());
-					mc.gui.setScreen(null);
+					mc.setScreen(null);
 				}
 				return true;
 			});

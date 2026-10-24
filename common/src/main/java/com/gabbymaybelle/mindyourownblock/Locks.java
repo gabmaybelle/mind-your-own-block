@@ -19,7 +19,7 @@ import net.minecraft.network.codec.StreamCodec;
 public record Locks(LongSet positions) {
 	public static final Codec<Locks> CODEC = Codec.LONG.listOf().xmap(Locks::of, Locks::asList);
 	public static final MapCodec<Locks> MAP_CODEC = CODEC.fieldOf("positions");
-	public static final StreamCodec<ByteBuf, Locks> STREAM_CODEC = ByteBufCodecs.LONG.apply(ByteBufCodecs.list()).map(Locks::of, Locks::asList);
+	public static final StreamCodec<ByteBuf, Locks> STREAM_CODEC = ByteBufCodecs.VAR_LONG.apply(ByteBufCodecs.list()).map(Locks::of, Locks::asList);
 
 	public static Locks empty() {
 		return new Locks(new LongOpenHashSet());

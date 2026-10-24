@@ -5,7 +5,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -57,20 +57,20 @@ final class PlacingChecks {
 		joins(player, next(player, slot), Items.IRON_BARS, Blocks.IRON_BARS, exact, "iron bars" + with, check);
 		walls(player, next(player, slot), Items.COBBLESTONE_WALL, Blocks.COBBLESTONE_WALL, exact, "a cobblestone wall" + with, check);
 		// Modded ones built on vanilla's, when Macaw's Fences and Walls is installed (one CI run).
-		Identifier picket = Identifier.fromNamespaceAndPath("mcwfences", "oak_picket_fence");
-		Identifier pillar = Identifier.fromNamespaceAndPath("mcwfences", "andesite_pillar_wall");
+		ResourceLocation picket = ResourceLocation.fromNamespaceAndPath("mcwfences", "oak_picket_fence");
+		ResourceLocation pillar = ResourceLocation.fromNamespaceAndPath("mcwfences", "andesite_pillar_wall");
 		if (BuiltInRegistries.BLOCK.containsKey(picket)) {
-			joins(player, next(player, slot), BuiltInRegistries.ITEM.getValue(picket), BuiltInRegistries.BLOCK.getValue(picket), exact,
+			joins(player, next(player, slot), BuiltInRegistries.ITEM.get(picket), BuiltInRegistries.BLOCK.get(picket), exact,
 					"Macaw's oak picket fence" + with, check);
 			// Macaw's pillar walls are fences underneath (arms are true or false, no post), so checked as one.
-			joins(player, next(player, slot), BuiltInRegistries.ITEM.getValue(pillar), BuiltInRegistries.BLOCK.getValue(pillar), exact,
+			joins(player, next(player, slot), BuiltInRegistries.ITEM.get(pillar), BuiltInRegistries.BLOCK.get(pillar), exact,
 					"Macaw's andesite pillar wall" + with, check);
 		}
 
 		// Straight stairs: the stair in front faces across, so vanilla bends the new one into an outer corner.
 		{
 			BlockPos at = next(player, slot);
-			player.level().setBlock(at.north(), Blocks.OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.EAST), 3);
+			player.serverLevel().setBlock(at.north(), Blocks.OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.EAST), 3);
 			BlockState placed = place(player, at, Items.OAK_STAIRS, 180F);
 			boolean straight = placed.is(Blocks.OAK_STAIRS) && placed.getValue(StairBlock.SHAPE) == StairsShape.STRAIGHT;
 			check.check(placed.is(Blocks.OAK_STAIRS), "an oak stair" + with + " is placed (got " + placed + ")");
@@ -83,30 +83,30 @@ final class PlacingChecks {
 
 		// Tidy the water away before it can flow: nothing has ticked yet, since this all runs at once.
 		for (BlockPos at : water) {
-			player.level().setBlock(at, Blocks.AIR.defaultBlockState(), 3);
+			player.serverLevel().setBlock(at, Blocks.AIR.defaultBlockState(), 3);
 		}
 	}
 
 	private static void joins(ServerPlayer player, BlockPos at, Item item, Block block, boolean exact, String what, Check check) {
-		player.level().setBlock(at.east(), block.defaultBlockState(), 3);
+		player.serverLevel().setBlock(at.east(), block.defaultBlockState(), 3);
 		BlockState placed = place(player, at, item, 0F);
 		check.check(placed.is(block), what + " is placed (got " + placed + ")");
 		boolean joined = placed.hasProperty(CrossCollisionBlock.EAST) && placed.getValue(CrossCollisionBlock.EAST);
 		check.check(joined != exact, what + (exact ? " stands alone" : " joins its neighbour") + " (got " + placed + ")");
 		// The neighbour doesn't reach toward an exact one either (Gabby, 2026-10-21), and does toward a normal one.
-		BlockState neighbour = player.level().getBlockState(at.east());
+		BlockState neighbour = player.serverLevel().getBlockState(at.east());
 		boolean reaches = neighbour.hasProperty(CrossCollisionBlock.WEST) && neighbour.getValue(CrossCollisionBlock.WEST);
 		check.check(reaches != exact, what + ": its neighbour " + (exact ? "doesn't reach toward it" : "joins it") + " (got " + neighbour + ")");
 	}
 
 	private static void walls(ServerPlayer player, BlockPos at, Item item, Block block, boolean exact, String what, Check check) {
-		player.level().setBlock(at.east(), block.defaultBlockState(), 3);
+		player.serverLevel().setBlock(at.east(), block.defaultBlockState(), 3);
 		BlockState placed = place(player, at, item, 0F);
 		check.check(placed.is(block), what + " is placed (got " + placed + ")");
-		boolean joined = placed.hasProperty(WallBlock.EAST) && placed.getValue(WallBlock.EAST) != WallSide.NONE;
+		boolean joined = placed.hasProperty(WallBlock.EAST_WALL) && placed.getValue(WallBlock.EAST_WALL) != WallSide.NONE;
 		check.check(joined != exact, what + (exact ? " stands alone" : " joins its neighbour") + " (got " + placed + ")");
-		BlockState neighbour = player.level().getBlockState(at.east());
-		boolean reaches = neighbour.hasProperty(WallBlock.WEST) && neighbour.getValue(WallBlock.WEST) != WallSide.NONE;
+		BlockState neighbour = player.serverLevel().getBlockState(at.east());
+		boolean reaches = neighbour.hasProperty(WallBlock.WEST_WALL) && neighbour.getValue(WallBlock.WEST_WALL) != WallSide.NONE;
 		check.check(reaches != exact, what + ": its neighbour " + (exact ? "doesn't reach toward it" : "joins it") + " (got " + neighbour + ")");
 		if (exact) {
 			check.check(placed.hasProperty(WallBlock.UP) && placed.getValue(WallBlock.UP), what + " shows its post (got " + placed + ")");
@@ -114,7 +114,7 @@ final class PlacingChecks {
 	}
 
 	private static void dry(ServerPlayer player, BlockPos at, Item item, Block block, boolean exact, String what, Check check, List<BlockPos> water) {
-		ServerLevel level = player.level();
+		ServerLevel level = player.serverLevel();
 		level.setBlock(at, Blocks.WATER.defaultBlockState(), 3);
 		water.add(at);
 		BlockState placed = place(player, at, item, 0F);
@@ -140,12 +140,12 @@ final class PlacingChecks {
 		BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(floor).add(0, 0.5, 0), Direction.UP, floor, false);
 		stack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit));
 		player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-		return player.level().getBlockState(at);
+		return player.serverLevel().getBlockState(at);
 	}
 
 	/** The next case's spot: its own clear patch on a stone floor, 6 blocks apart, east of the player. */
 	private static BlockPos next(ServerPlayer player, int[] slot) {
-		return clear(player.level(), player.blockPosition().offset(6 + 6 * slot[0]++, 0, 4));
+		return clear(player.serverLevel(), player.blockPosition().offset(6 + 6 * slot[0]++, 0, 4));
 	}
 
 	/** Clears a 5 by 5 patch around {@code at}, three high, on a stone floor, and returns {@code at}. */

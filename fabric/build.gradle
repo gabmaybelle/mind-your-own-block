@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'fabric-loom' version "${loom_version}"
 }
 
 // The common sources are compiled straight into this jar (no common jar to bundle), so the
@@ -10,6 +10,10 @@ sourceSets.main {
 }
 
 loom {
+	// Named for this mod: the default, fabric-refmap.json, would clash with any other mod built the same way.
+	mixin {
+		defaultRefmapName = "mind_your_own_block-refmap.json"
+	}
 	mods {
 		"mind_your_own_block" {
 			sourceSet sourceSets.main
@@ -19,18 +23,20 @@ loom {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	// 1.21.1 ships obfuscated: the code is written in the official Mojang names and Loom remaps.
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// Compatibility runs: `./gradlew :fabric:runClientGameTest -PtestBuildBetter` (or -PtestMacawsFences)
 	// plays the in-game test with that mod installed, fetched from Modrinth's maven by version id.
 	// Nothing here is bundled or required.
 	if (project.hasProperty("testBuildBetter")) {
-		runtimeOnly "maven.modrinth:rosetta-lib:${project.rosetta_fabric_version}"
-		runtimeOnly "maven.modrinth:build-better:${project.build_better_fabric_version}"
+		modLocalRuntime "maven.modrinth:rosetta-lib:${project.rosetta_fabric_version}"
+		modLocalRuntime "maven.modrinth:build-better:${project.build_better_fabric_version}"
 	}
 	if (project.hasProperty("testMacawsFences")) {
-		runtimeOnly "maven.modrinth:macaws-fences-and-walls:${project.macaws_fences_fabric_version}"
+		modLocalRuntime "maven.modrinth:macaws-fences-and-walls:${project.macaws_fences_fabric_version}"
 	}
 }
 
@@ -43,19 +49,40 @@ processResources {
 	}
 }
 
-tasks.named('jar') { archiveBaseName = "${rootProject.name}-fabric" }
-tasks.named('sourcesJar') { archiveBaseName = "${rootProject.name}-fabric" }
-
 // Client game tests: `./gradlew :fabric:runClientGameTest` starts a real game and plays through
-// the checks in src/gametest. Nothing there ships in the jar.
-fabricApi {
-	configureTests {
-		createSourceSet = true
-		modId = "mind_your_own_block_gametest"
-		enableGameTests = false
-		enableClientGameTests = true
-		eula = true
+// the checks in src/gametest. Nothing there ships in the jar. Fabric's client game test API
+// doesn't exist for 1.21.1, so the harness is the test's own (src/gametest/.../harness) and the
+// run is a plain client run with the test source set as a second mod.
+sourceSets {
+	gametest {
+		compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+		runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+		// The placing checks both loaders' tests share (common/src/sharedtest). Never in the jar.
+		java.srcDir project(':common').file('src/sharedtest/java')
 	}
 }
-// The placing checks both loaders' tests share (common/src/sharedtest). Never in the jar.
-sourceSets.gametest.java.srcDir project(':common').file('src/sharedtest/java')
+
+loom {
+	mods {
+		"mind_your_own_block_gametest" {
+			sourceSet sourceSets.gametest
+		}
+	}
+	runs {
+		clientGameTest {
+			client()
+			name = "Client Game Test"
+			source sourceSets.gametest
+			runDir "build/run/clientGameTest"
+			property "mind_your_own_block.gametest", "true"
+			programArgs "--width", "854", "--height", "480"
+			ideConfigGenerated false
+		}
+	}
+}
+
+// mind-your-own-block-fabric-<version>.jar, the name players download.
+tasks.named('jar') { archiveBaseName = "${rootProject.name}-fabric" }
+tasks.named('sourcesJar') { archiveBaseName = "${rootProject.name}-fabric" }
+tasks.named('remapJar') { archiveBaseName = "${rootProject.name}-fabric" }
+tasks.named('remapSourcesJar') { archiveBaseName = "${rootProject.name}-fabric" }

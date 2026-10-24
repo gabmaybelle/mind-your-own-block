@@ -1,6 +1,7 @@
 package com.gabbymaybelle.mindyourownblock;
 
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -9,6 +10,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,9 +33,13 @@ import net.minecraft.world.level.chunk.LevelChunk;
  */
 public final class StaysPut {
 	/** The properties that make up a block's shape: the arms, a wall's post and a stair's corner. */
+	/** A wall's arm per side (1.21.1 keeps the map private, so this is the mod's own). */
+	public static final Map<Direction, EnumProperty<WallSide>> WALL_ARMS = Map.of(
+			Direction.NORTH, WallBlock.NORTH_WALL, Direction.EAST, WallBlock.EAST_WALL,
+			Direction.SOUTH, WallBlock.SOUTH_WALL, Direction.WEST, WallBlock.WEST_WALL);
 	private static final List<Property<?>> SHAPE = List.of(
 			CrossCollisionBlock.NORTH, CrossCollisionBlock.EAST, CrossCollisionBlock.SOUTH, CrossCollisionBlock.WEST,
-			WallBlock.NORTH, WallBlock.EAST, WallBlock.SOUTH, WallBlock.WEST, WallBlock.UP,
+			WallBlock.NORTH_WALL, WallBlock.EAST_WALL, WallBlock.SOUTH_WALL, WallBlock.WEST_WALL, WallBlock.UP,
 			StairBlock.SHAPE);
 
 	private StaysPut() {
@@ -110,12 +116,12 @@ public final class StaysPut {
 		boolean cut = false;
 		for (Direction side : Direction.Plane.HORIZONTAL) {
 			if (block instanceof CrossCollisionBlock) {
-				BooleanProperty arm = CrossCollisionBlock.PROPERTY_BY_DIRECTION.get(side);
+				BooleanProperty arm = PipeBlock.PROPERTY_BY_DIRECTION.get(side);
 				if (state.hasProperty(arm) && state.getValue(arm) && ignored(level, pos.relative(side))) {
 					state = state.setValue(arm, false);
 				}
 			} else if (block instanceof WallBlock) {
-				EnumProperty<WallSide> arm = WallBlock.PROPERTY_BY_DIRECTION.get(side);
+				EnumProperty<WallSide> arm = StaysPut.WALL_ARMS.get(side);
 				if (state.hasProperty(arm) && state.getValue(arm) != WallSide.NONE && ignored(level, pos.relative(side))) {
 					state = state.setValue(arm, WallSide.NONE);
 					cut = true;
@@ -155,8 +161,8 @@ public final class StaysPut {
 	}
 
 	private static boolean endOrCorner(BlockState wall) {
-		boolean n = wall.getValue(WallBlock.NORTH) == WallSide.NONE, s = wall.getValue(WallBlock.SOUTH) == WallSide.NONE;
-		boolean e = wall.getValue(WallBlock.EAST) == WallSide.NONE, w = wall.getValue(WallBlock.WEST) == WallSide.NONE;
+		boolean n = wall.getValue(WallBlock.NORTH_WALL) == WallSide.NONE, s = wall.getValue(WallBlock.SOUTH_WALL) == WallSide.NONE;
+		boolean e = wall.getValue(WallBlock.EAST_WALL) == WallSide.NONE, w = wall.getValue(WallBlock.WEST_WALL) == WallSide.NONE;
 		return n && s && e && w || n != s || e != w;
 	}
 

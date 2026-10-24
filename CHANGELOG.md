@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0+1.21.1
+
+- Everything in 0.2.0, on Minecraft 1.21.1 (Fabric and NeoForge). Nothing else changes: the same
+  button, the same shapes, the same padlock.
+
 ## 0.2.0
 
 - A fence, wall, pane or iron bars placed normally beside one you placed with the button now ends

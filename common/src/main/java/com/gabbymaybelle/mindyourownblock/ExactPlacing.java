@@ -4,6 +4,7 @@ import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -70,7 +71,7 @@ public final class ExactPlacing {
 		Block block = state.getBlock();
 		// Fences, glass panes and iron bars: no arms toward the neighbours.
 		if (block instanceof CrossCollisionBlock) {
-			for (BooleanProperty side : CrossCollisionBlock.PROPERTY_BY_DIRECTION.values()) {
+			for (BooleanProperty side : PipeBlock.PROPERTY_BY_DIRECTION.values()) {
 				if (state.hasProperty(side)) {
 					state = state.setValue(side, false);
 				}
@@ -78,7 +79,7 @@ public final class ExactPlacing {
 		}
 		// Walls: no arms, and the post stands up as it does on a wall on its own.
 		if (block instanceof WallBlock) {
-			for (EnumProperty<WallSide> side : WallBlock.PROPERTY_BY_DIRECTION.values()) {
+			for (EnumProperty<WallSide> side : StaysPut.WALL_ARMS.values()) {
 				if (state.hasProperty(side)) {
 					state = state.setValue(side, WallSide.NONE);
 				}

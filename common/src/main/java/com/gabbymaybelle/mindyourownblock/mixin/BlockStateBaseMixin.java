@@ -4,9 +4,7 @@ import com.gabbymaybelle.mindyourownblock.ExactPlacing;
 import com.gabbymaybelle.mindyourownblock.StaysPut;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,12 +18,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * survive) and then gets its arms, post and stair shape back. This runs on every neighbour update in
  * the game, so the first check is whether the block is a kind that reshapes at all. A normal block's
  * new shape leaves out any locked neighbour.
+ *
+ * <p>1.21.1's {@code updateShape} takes the direction and neighbour first and the level third (26.x
+ * reordered them and added the tick access and random); the hook's body is the same.
  */
 @Mixin(BlockBehaviour.BlockStateBase.class)
 abstract class BlockStateBaseMixin {
 	@Inject(method = "updateShape", at = @At("RETURN"), cancellable = true)
-	private void mindYourOwnBlock$keepShape(LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction directionToNeighbour,
-			BlockPos neighbourPos, BlockState neighbourState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
+	private void mindYourOwnBlock$keepShape(Direction directionToNeighbour, BlockState neighbourState, LevelAccessor level, BlockPos pos,
+			BlockPos neighbourPos, CallbackInfoReturnable<BlockState> cir) {
 		BlockState before = (BlockState) (Object) this;
 		if (!StaysPut.isShaped(before)) {
 			return;

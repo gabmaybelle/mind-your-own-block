@@ -15,11 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Where spreading water asks whether it may fill a block. A block placed dry with the key says no,
  * so a pond doesn't pour back into it (vanilla turns a spot with two water sources beside it into a
  * source). Buckets and dispensers fill blocks another way, so poured water still fills it.
+ *
+ * <p>On 1.21.1 the question is {@code canHoldFluid}, an instance method (26.x's {@code canHoldSpecificFluid} is static).
  */
 @Mixin(FlowingFluid.class)
 abstract class FlowingFluidMixin {
-	@Inject(method = "canHoldSpecificFluid", at = @At("HEAD"), cancellable = true)
-	private static void mindYourOwnBlock$keepDry(BlockGetter level, BlockPos pos, BlockState state, Fluid newFluid, CallbackInfoReturnable<Boolean> cir) {
+	@Inject(method = "canHoldFluid", at = @At("HEAD"), cancellable = true)
+	private void mindYourOwnBlock$keepDry(BlockGetter level, BlockPos pos, BlockState state, Fluid newFluid, CallbackInfoReturnable<Boolean> cir) {
 		if (StaysPut.keepsDry(level, pos, state)) {
 			cir.setReturnValue(false);
 		}

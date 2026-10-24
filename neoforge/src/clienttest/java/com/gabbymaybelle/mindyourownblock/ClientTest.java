@@ -9,11 +9,12 @@ import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
@@ -98,7 +99,7 @@ final class ClientTest {
 
 	/** Saves a screenshot in the run's screenshots folder (named by the time it was taken). */
 	static void screenshot() {
-		run(mc -> Screenshot.grab(mc, false));
+		run(mc -> Screenshot.grab(mc.gameDirectory, mc.getMainRenderTarget(), message -> {}));
 		waitTicks(2);
 	}
 
@@ -125,14 +126,16 @@ final class ClientTest {
 	static void createWorld(String baseName) {
 		String name = baseName + "-" + System.currentTimeMillis();
 		world = name;
-		waitUntil("the title screen", 2400, mc -> mc.gui.overlay() == null && mc.gui.screen() != null);
+		waitUntil("the title screen", 2400, mc -> mc.getOverlay() == null && mc.screen != null);
+		// The game runs in the background and loses focus when it is sent behind other windows;
+		// a singleplayer game that pauses then stops the whole world (the Fabric harness does the same).
+		run(mc -> mc.options.pauseOnLostFocus = false);
 		run(mc -> mc.createWorldOpenFlows().createFreshLevel(name,
-				new LevelSettings(name, GameType.CREATIVE, new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false), true,
-						WorldDataConfiguration.DEFAULT),
+				new LevelSettings(name, GameType.CREATIVE, false, Difficulty.PEACEFUL, true, new GameRules(), WorldDataConfiguration.DEFAULT),
 				new WorldOptions(1L, false, false),
-				registries -> registries.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
-				mc.gui.screen()));
-		waitUntil("the player in the new world", 2400, mc -> mc.player != null && mc.level != null && !(mc.gui.screen() instanceof LevelLoadingScreen));
+				registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createWorldDimensions(),
+				mc.screen));
+		waitUntil("the player in the new world", 2400, mc -> mc.player != null && mc.level != null && !(mc.screen instanceof LevelLoadingScreen));
 		closeOtherModsScreens();
 		// Time for the chunks around the player to arrive and draw.
 		waitTicks(60);
@@ -143,12 +146,17 @@ final class ClientTest {
 	 * and waits until the player is back in it.
 	 */
 	static void rejoin() {
-		run(mc -> mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE));
-		waitUntil("the world to close", 2400, mc -> mc.level == null && mc.getSingleplayerServer() == null && mc.gui.screen() != null);
+		run(mc -> {
+			if (mc.level != null) {
+				mc.level.disconnect();
+			}
+			mc.disconnect();
+		});
+		waitUntil("the world to close", 2400, mc -> mc.level == null && mc.getSingleplayerServer() == null && mc.screen != null);
 		run(mc -> mc.createWorldOpenFlows().openWorld(world, () -> {
 			throw new AssertionError("Opening the world again was cancelled");
 		}));
-		waitUntil("the player back in the world", 2400, mc -> mc.player != null && mc.level != null && !(mc.gui.screen() instanceof LevelLoadingScreen));
+		waitUntil("the player back in the world", 2400, mc -> mc.player != null && mc.level != null && !(mc.screen instanceof LevelLoadingScreen));
 		closeOtherModsScreens();
 		waitTicks(60);
 	}
@@ -162,14 +170,14 @@ final class ClientTest {
 		int[] quiet = { 0 };
 		int[] waited = { 0 };
 		STEPS.add(mc -> {
-			Screen screen = mc.gui.screen();
+			Screen screen = mc.screen;
 			if (screen == null) {
 				quiet[0]++;
 			} else {
 				quiet[0] = 0;
-				if (!(screen instanceof LevelLoadingScreen)) {
+				if (!(screen instanceof LevelLoadingScreen) && !(screen instanceof ReceivingLevelScreen)) {
 					MindYourOwnBlock.LOGGER.info("[test] closing a screen another mod opened: {}", screen.getClass().getName());
-					mc.gui.setScreen(null);
+					mc.setScreen(null);
 				}
 			}
 			if (++waited[0] > 600) {

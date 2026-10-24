@@ -14,8 +14,8 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /** The NeoForge entrypoint on the player's game: the key, read every tick, and the crosshair mark. A dedicated server never loads it. */
 @Mod(value = MindYourOwnBlock.MOD_ID, dist = Dist.CLIENT)
@@ -30,14 +30,11 @@ public class MindYourOwnBlockNeoForgeClient {
 
 			@Override
 			public void sendToServer(CustomPacketPayload payload) {
-				ClientPacketDistributor.sendToServer(payload);
+				PacketDistributor.sendToServer(payload);
 			}
 		});
-		modBus.addListener((RegisterKeyMappingsEvent event) -> {
-			event.registerCategory(ExactKey.CATEGORY);
-			event.register(ExactKey.KEY);
-		});
-		modBus.addListener((RegisterGuiLayersEvent event) -> event.registerAboveAll(ExactHint.ID, ExactHint::extract));
+		modBus.addListener((RegisterKeyMappingsEvent event) -> event.register(ExactKey.KEY));
+		modBus.addListener((RegisterGuiLayersEvent event) -> event.registerAboveAll(ExactHint.ID, ExactHint::render));
 		NeoForge.EVENT_BUS.addListener((ClientTickEvent.Pre event) -> ExactKey.onTick(Minecraft.getInstance()));
 		NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> ExactKey.onLeave());
 	}

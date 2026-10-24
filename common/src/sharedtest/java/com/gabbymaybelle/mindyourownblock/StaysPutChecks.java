@@ -9,6 +9,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -41,24 +42,24 @@ final class StaysPutChecks {
 	/** With the key held: the four blocks placed exactly, which locks them. */
 	static void placeLocked(ServerPlayer player, PlacingChecks.Check check) {
 		BlockPos base = player.blockPosition().offset(-8, 0, -10);
-		postA = PlacingChecks.clear(player.level(), base);
-		stair = PlacingChecks.clear(player.level(), base.offset(-6, 0, 0));
-		postB = PlacingChecks.clear(player.level(), base.offset(-12, 0, 0));
-		postC = PlacingChecks.clear(player.level(), base.offset(-18, 0, 0));
+		postA = PlacingChecks.clear(player.serverLevel(), base);
+		stair = PlacingChecks.clear(player.serverLevel(), base.offset(-6, 0, 0));
+		postB = PlacingChecks.clear(player.serverLevel(), base.offset(-12, 0, 0));
+		postC = PlacingChecks.clear(player.serverLevel(), base.offset(-18, 0, 0));
 		for (BlockPos post : new BlockPos[] { postA, postB, postC }) {
 			PlacingChecks.place(player, post, Items.OAK_FENCE, 0F);
 		}
 		// The pond: sunk into the patch floor, with stone all round, so the water has nowhere to go.
-		pondPost = PlacingChecks.clear(player.level(), base.offset(-24, 0, 0)).below();
+		pondPost = PlacingChecks.clear(player.serverLevel(), base.offset(-24, 0, 0)).below();
 		for (BlockPos at : BlockPos.betweenClosed(pondPost.offset(-1, 0, -1), pondPost.offset(1, 0, 1))) {
-			player.level().setBlock(at, Blocks.WATER.defaultBlockState(), 3);
+			player.serverLevel().setBlock(at, Blocks.WATER.defaultBlockState(), 3);
 		}
 		PlacingChecks.place(player, pondPost, Items.OAK_FENCE, 0F);
-		check.check(!player.level().getBlockState(pondPost).getValue(BlockStateProperties.WATERLOGGED),
-				"a post placed with the key in the middle of a pond is dry (" + player.level().getBlockState(pondPost) + ")");
+		check.check(!player.serverLevel().getBlockState(pondPost).getValue(BlockStateProperties.WATERLOGGED),
+				"a post placed with the key in the middle of a pond is dry (" + player.serverLevel().getBlockState(pondPost) + ")");
 		// Facing north, so a stair placed in front of it later (crossways) would bend it.
 		PlacingChecks.place(player, stair, Items.OAK_STAIRS, 180F);
-		ServerLevel level = player.level();
+		ServerLevel level = player.serverLevel();
 		for (BlockPos at : new BlockPos[] { postA, stair, postB, postC, pondPost }) {
 			check.check(StaysPut.isLocked(level, at), "a block placed with the key is locked (" + level.getBlockState(at) + ")");
 		}
@@ -66,7 +67,7 @@ final class StaysPutChecks {
 
 	/** Without the key: neighbours come and go, a bucket fills post A, it's broken; the piston is set off. */
 	static void neighbours(ServerPlayer player, PlacingChecks.Check check) {
-		ServerLevel level = player.level();
+		ServerLevel level = player.serverLevel();
 		check.check(!StaysPut.isLocked(level, postA.north(3)), "an empty spot isn't locked");
 
 		// Post A: a normal fence on every side, placed the vanilla way.
@@ -77,7 +78,7 @@ final class StaysPutChecks {
 		// Gabby, 2026-10-21: a normal fence beside a locked post ends its line instead of reaching toward it.
 		for (Direction side : Direction.Plane.HORIZONTAL) {
 			BlockState beside = level.getBlockState(postA.relative(side));
-			check.check(beside.is(Blocks.OAK_FENCE) && !beside.getValue(CrossCollisionBlock.PROPERTY_BY_DIRECTION.get(side.getOpposite())),
+			check.check(beside.is(Blocks.OAK_FENCE) && !beside.getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side.getOpposite())),
 					"a normal fence placed " + side.getName() + " of a locked post doesn't reach toward it (" + beside + ")");
 		}
 		for (Direction side : Direction.Plane.HORIZONTAL) {
@@ -124,7 +125,7 @@ final class StaysPutChecks {
 
 	/** A few ticks after the piston fired: the pushed post has lost its lock and acts like vanilla. */
 	static void afterPiston(ServerPlayer player, PlacingChecks.Check check) {
-		ServerLevel level = player.level();
+		ServerLevel level = player.serverLevel();
 		BlockPos moved = postB.east();
 		BlockState there = level.getBlockState(moved);
 		check.check(there.is(Blocks.OAK_FENCE), "the piston pushed the post one block east (found " + there + ")");
@@ -156,7 +157,7 @@ final class StaysPutChecks {
 
 	/** After the world was saved, closed and opened again: post C is still locked and still alone. */
 	static void afterRejoin(ServerPlayer player, PlacingChecks.Check check) {
-		ServerLevel level = player.level();
+		ServerLevel level = player.serverLevel();
 		check.check(StaysPut.isLocked(level, postC), "post C is still locked after the world is closed and opened again");
 		check.check(level.getBlockState(postC).equals(postCState), "post C is unchanged after reopening (" + level.getBlockState(postC) + ")");
 		PlacingChecks.place(player, postC.west(), Items.OAK_FENCE, 0F);
@@ -166,7 +167,7 @@ final class StaysPutChecks {
 
 	private static boolean alone(BlockState state) {
 		for (Direction side : Direction.Plane.HORIZONTAL) {
-			if (state.getValue(CrossCollisionBlock.PROPERTY_BY_DIRECTION.get(side))) {
+			if (state.getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side))) {
 				return false;
 			}
 		}

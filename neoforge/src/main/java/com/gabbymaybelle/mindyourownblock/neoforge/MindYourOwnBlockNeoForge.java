@@ -22,7 +22,7 @@ public class MindYourOwnBlockNeoForge {
 	private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MindYourOwnBlock.MOD_ID);
 	/** Each chunk's locks, saved with it (only when it has some) and sent to every player who can see it. */
 	private static final Supplier<AttachmentType<Locks>> LOCKS = ATTACHMENTS.register("locks",
-			() -> AttachmentType.builder(Locks::empty).serialize(Locks.MAP_CODEC, locks -> !locks.isEmpty()).sync(Locks.STREAM_CODEC).build());
+			() -> AttachmentType.builder(Locks::empty).serialize(Locks.CODEC, locks -> !locks.isEmpty()).sync(Locks.STREAM_CODEC).build());
 
 	public MindYourOwnBlockNeoForge(IEventBus modBus) {
 		Platform.setChunks(new Platform.Chunks() {

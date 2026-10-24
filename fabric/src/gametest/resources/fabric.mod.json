@@ -5,7 +5,10 @@
 	"name": "Mind Your Own Block game tests",
 	"environment": "*",
 	"entrypoints": {
-		"fabric-client-gametest": [
+		"client": [
+			"com.gabbymaybelle.mindyourownblock.harness.GameTestRunner"
+		],
+		"mind_your_own_block:gametest": [
 			"com.gabbymaybelle.mindyourownblock.MindYourOwnBlockClientTest"
 		]
 	},

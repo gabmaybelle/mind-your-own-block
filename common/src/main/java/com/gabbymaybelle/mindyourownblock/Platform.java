@@ -2,7 +2,7 @@ package com.gabbymaybelle.mindyourownblock;
 
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.level.chunk.LevelChunk;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The few things the mod asks of the loader. Each loader's main entrypoint sets {@link Chunks} first

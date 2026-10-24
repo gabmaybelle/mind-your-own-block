@@ -34,8 +34,8 @@ public class MindYourOwnBlockFabric implements ModInitializer {
 			}
 		});
 		MindYourOwnBlock.init();
-		PayloadTypeRegistry.serverboundPlay().register(ExactMode.Held.TYPE, ExactMode.Held.CODEC);
+		PayloadTypeRegistry.playC2S().register(ExactMode.Held.TYPE, ExactMode.Held.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(ExactMode.Held.TYPE, (payload, context) -> ExactMode.onHeld(context.player(), payload.held()));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> ExactMode.onLeave(handler.getPlayer()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> ExactMode.onLeave(handler.player));
 	}
 }

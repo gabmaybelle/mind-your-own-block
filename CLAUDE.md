@@ -1,6 +1,6 @@
 # Mind Your Own Block
 
-A Fabric and NeoForge mod for Minecraft 26.3 (mod ID `mind_your_own_block`): hold a key while
+A Fabric and NeoForge mod for Minecraft 1.21.1 (this branch; `main` is 26.3; mod ID `mind_your_own_block`): hold a key while
 placing and the block keeps the shape you placed it in. Fences, walls, panes and bars don't join
 their neighbours, stairs don't bend into corners, and blocks placed in water stay dry, until the
 block is broken. Invisible vanilla: no new blocks or items, no settings screen, no wheel or menu.
@@ -84,9 +84,18 @@ One codebase, two jars:
 
 - **The common sources are compiled twice**, once per loader. A class that compiles on Fabric but
   not NeoForge (or the reverse) is a common class that leaked a loader import.
-- **26.3 renumbered keys** (and moved from GLFW to SDL3): read key numbers while the game runs
-  (`InputConstants.getKey("key.keyboard.x").getValue()`), never compile a constant in.
-- Vanilla names changed a lot in 26.x: check the merged jar rather than older docs.
+- **1.21.1 ships obfuscated:** the code is written in Mojang's names and Loom remaps the jar, mixin
+  targets included (no refmap). A MixinExtras `@WrapOperation` / `@ModifyExpressionValue` with one
+  `at` survives that here (both dedicated servers load with every mixin applied); `@Redirect` doesn't
+  (see the main branch's notes), so never swap one in.
+- **What differs from 26.3 in this code:** `ResourceLocation` for `Identifier`; `updateShape(Direction,
+  neighbour, LevelAccessor, pos, neighbourPos)`; `FlowingFluid.canHoldFluid` (instance) for
+  `canHoldSpecificFluid`; `WallBlock.NORTH_WALL` and friends, with the per-side maps the mod's own
+  (`StaysPut.WALL_ARMS`, `PipeBlock.PROPERTY_BY_DIRECTION`); `ByteBufCodecs.VAR_LONG`; a String key
+  category; `GuiGraphics.blitSprite(sprite, x, y, w, h)` on Fabric's `HudRenderCallback` and NeoForge's
+  `RegisterGuiLayersEvent`; `PacketDistributor.sendToServer`. Keys are read by name at run time, as on 26.3.
+- Fabric's client game test API doesn't exist for 1.21.1: `fabric/src/gametest/.../harness` is the
+  little of it the test uses (the same harness as Summiteer's 1.21.1 branch, plus hold/release key).
 - **Build Better shows welcome cards** (through its library, Rosetta) the first time a world loads.
   Both in-game tests close any screen another mod opens after the world loads
   (`closeOtherModsScreens`), or the cards sit over the test and catch its key presses.
@@ -137,14 +146,13 @@ or test names. Check the diff for these before every push.
   put the code back. A check that compares against the setting it tests proves nothing.
 - A data change (worldgen, loot, a template) gets the same proof: run the part of the test that
   sees it, on every terrain in the branch's matrix, and quote the numbers in the progress row.
-- On Linux without a screen, run game tests under `xvfb-run -a`. 26.3 also needs
-  `SDL_VIDEO_FORCE_EGL=1` with `libegl1 libegl-mesa0` installed, or the game hangs at startup.
+- On Linux without a screen, run game tests under `xvfb-run -a` (1.21.1 needs nothing more).
 
 **Writing.**
 - README and CHANGELOG are for players: plain, friendly, no jargon. New player-facing changes
   go in the CHANGELOG's newest section.
 - Keep the credit line: "made by Gabby with help from Claude, an AI assistant".
 - Gabby publishes on Modrinth herself. Don't upload anything there.
-**Minecraft.** Fabric and NeoForge (Mojang names; Loom 1.18.4, ModDevGradle 2.0, Java 25).
-`main` is the newest Minecraft (26.3) and the only line: no older versions are planned.
-Vanilla names changed a lot in 26.x: check the merged jar rather than older docs.
+**Minecraft.** Fabric and NeoForge (Mojang names; Loom 1.18.4, ModDevGradle 2.0; Java 21 on this
+branch, 25 on `main`). `main` is the newest Minecraft (26.3); this `1.21.1` branch is its port, in its
+own folder, updated when `main` releases. No 1.20.1 unless players ask.
