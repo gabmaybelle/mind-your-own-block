@@ -1,6 +1,6 @@
 # Mind Your Own Block
 
-A Fabric and NeoForge mod for Minecraft 26.3 (mod ID `mind_your_own_block`): hold a key while
+A Fabric and NeoForge mod for Minecraft 26.3 (this `main` branch; the `1.21.1` branch is its port, in its own folder; mod ID `mind_your_own_block`): hold a key while
 placing and the block keeps the shape you placed it in. Fences, walls, panes and bars don't join
 their neighbours, stairs don't bend into corners, and blocks placed in water stay dry, until the
 block is broken. Invisible vanilla: no new blocks or items, no settings screen, no wheel or menu.
@@ -146,5 +146,5 @@ or test names. Check the diff for these before every push.
 - Keep the credit line: "made by Gabby with help from Claude, an AI assistant".
 - Gabby publishes on Modrinth herself. Don't upload anything there.
 **Minecraft.** Fabric and NeoForge (Mojang names; Loom 1.18.4, ModDevGradle 2.0, Java 25).
-`main` is the newest Minecraft (26.3) and the only line: no older versions are planned.
+`main` is the newest Minecraft (26.3); the `1.21.1` branch is its port (Java 21, Mojang names through Loom), updated when `main` releases. No 1.20.1 unless players ask.
 Vanilla names changed a lot in 26.x: check the merged jar rather than older docs.

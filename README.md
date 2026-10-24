@@ -1,6 +1,6 @@
 # Mind Your Own Block
 
-A Fabric and NeoForge mod for Minecraft 26.3. **Blocks that keep the shape you placed them in.**
+A Fabric and NeoForge mod for Minecraft 26.3 and 1.21.1. **Blocks that keep the shape you placed them in.**
 
 You place a fence post and it joins the fence next to it. You place a stair and it bends into a
 corner. You place a lantern post in a pond and it fills with water. Hold a key while you place, and
