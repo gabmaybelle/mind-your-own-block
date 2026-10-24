@@ -15,7 +15,7 @@ public final class TestWorldSave {
 	/** Opens the world again, the way the singleplayer screen does, and waits until the player is in it. */
 	public TestSingleplayerContext open() {
 		ctx.runOnClient(mc -> mc.createWorldOpenFlows().openWorld(folder, () -> mc.setScreen(new TitleScreen())));
-		ctx.waitFor(mc -> mc.getSingleplayerServer() != null && mc.level != null && mc.player != null && mc.screen == null, 2400);
+		ctx.waitFor(mc -> TestSingleplayerContext.inWorld(mc), 2400);
 		return new TestSingleplayerContext(ctx, ctx.computeOnClient(mc -> new TestServerContext(mc.getSingleplayerServer())));
 	}
 }

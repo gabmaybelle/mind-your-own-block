@@ -54,12 +54,12 @@ public final class TestWorldBuilder {
 			if (ctx.computeOnClient(mc -> mc.screen instanceof ConfirmScreen)) {
 				ctx.clickScreenButton("gui.yes");
 			}
-			if (ctx.computeOnClient(mc -> mc.getSingleplayerServer() != null && mc.level != null && mc.player != null && mc.screen == null)) {
+			if (ctx.computeOnClient(mc -> TestSingleplayerContext.inWorld(mc))) {
 				break;
 			}
 			ctx.waitTicks(10);
 		}
-		ctx.waitFor(mc -> mc.getSingleplayerServer() != null && mc.level != null && mc.player != null && mc.screen == null, 200);
+		ctx.waitFor(mc -> TestSingleplayerContext.inWorld(mc), 200);
 		return new TestSingleplayerContext(ctx, ctx.computeOnClient(mc -> new TestServerContext(mc.getSingleplayerServer())));
 	}
 }

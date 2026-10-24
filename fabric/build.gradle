@@ -21,6 +21,19 @@ loom {
 	}
 }
 
+// Build Better carries its library (Malt Core) inside its jar, which a dev run doesn't unpack.
+// For the -PtestBuildBetter run it is taken out here, while the project is set up, since Loom
+// reads every mod file then (a task would run too late).
+def maltCore = null
+if (project.hasProperty("testBuildBetter")) {
+	def buildBetterJar = configurations.detachedConfiguration(
+			dependencies.create("maven.modrinth:build-better:${project.build_better_fabric_version}")).singleFile
+	def nested = zipTree(buildBetterJar).matching { include 'META-INF/jars/maltcore-*.jar' }.singleFile
+	maltCore = layout.buildDirectory.file("maltcore/" + nested.name).get().asFile
+	maltCore.parentFile.mkdirs()
+	maltCore.bytes = nested.bytes
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	// 1.21.1 ships obfuscated: the code is written in the official Mojang names and Loom remaps.
@@ -34,6 +47,8 @@ dependencies {
 	if (project.hasProperty("testBuildBetter")) {
 		modLocalRuntime "maven.modrinth:rosetta-lib:${project.rosetta_fabric_version}"
 		modLocalRuntime "maven.modrinth:build-better:${project.build_better_fabric_version}"
+		// Its nested library, unpacked above.
+		modLocalRuntime files(maltCore)
 	}
 	if (project.hasProperty("testMacawsFences")) {
 		modLocalRuntime "maven.modrinth:macaws-fences-and-walls:${project.macaws_fences_fabric_version}"
