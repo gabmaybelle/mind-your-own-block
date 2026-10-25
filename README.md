@@ -23,4 +23,4 @@ server without it the key simply does nothing.
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/mind-your-own-block) · [GitHub releases](https://github.com/gabmaybelle/mind-your-own-block/releases) · **Watch:** [the Short](https://youtube.com/shorts/-mMzzM0U9nM)
 
-Made by Gabby with help from Claude, an AI assistant. MIT licence.
+Made by Gabby. MIT licence.
